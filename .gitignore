@@ -1,6 +1,9 @@
 # Project Specific
 overviewer
 
+# Debug
+chunk.nbt
+
 # IDEs
 .vscode
 .idea
