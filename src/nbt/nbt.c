@@ -75,7 +75,7 @@ static void read_new_tag(const unsigned char* data, int* offset) {
 		case TAG_Byte: read_byte(data, offset); break;
 		case TAG_Short: read_short(data, offset); break;
 		case TAG_Int: read_int(data, offset); break;
-		case TAG_Long: break;
+		case TAG_Long: read_long(data, offset); break;
 		case TAG_Float: break;
 		case TAG_Double: break;
 		case TAG_Byte_Array: break;
