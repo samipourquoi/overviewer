@@ -1,7 +1,8 @@
 CC = clang
 CFLAGS = -Wall
 SRC = 	src/overviewer.c \
-		src/nbt/nbt.c
+		src/nbt/nbt.c \
+		src/nbt/compound.c
 BIN = overviewer
 LIB = -lz
 
