@@ -1,15 +1,8 @@
 #include "parser.h"
+#include <stdio.h>
 
-int nbt_has_tag(nbt_node* tree) {
-	struct list_head* tag;
-	list_for_each(tag, &tree->payload.tag_list->entry) {
-		nbt_node* nbt_tag = list_entry(tag, struct nbt_list, entry)->data;
-		printf("%s\n", nbt_tag->name);
-	}
-	return 0;
-}
-
-nbt_node* parse_chunk(unsigned char* data, int length) {
+compound_tag* parse_chunk(unsigned char* data, int length) {
+/*
 	nbt_node* chunk = nbt_parse(data, length);
 	nbt_node* sections = nbt_find_by_name(chunk, "Sections");
 
@@ -28,4 +21,12 @@ nbt_node* parse_chunk(unsigned char* data, int length) {
 		}
 		printf("\n");
 	}
+ */
+	FILE* file = fopen("test.nbt", "rb");
+	unsigned char buf[44];
+	fread(buf, 1, 44, file);
+	// parse_tree(data, length);
+	parse_tree(buf, sizeof buf);
+	fclose(file);
+	return NULL;
 }

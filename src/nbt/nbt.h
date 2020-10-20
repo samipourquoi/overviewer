@@ -3,7 +3,7 @@
 
 #include "compound.h"
 
-enum nbt_type {
+typedef enum nbt_type {
 	TAG_End         = 0,
 	TAG_Byte        = 1,
 	TAG_Short       = 2,
@@ -17,15 +17,9 @@ enum nbt_type {
 	TAG_Compound    = 10,
 	TAG_Int_Array   = 11,
 	TAG_Long_Array  = 12
-};
-typedef enum nbt_type nbt_type;
+} nbt_type;
 
-struct nbt_tree {
-
-};
-typedef struct nbt_tree nbt_tree;
-
-struct nbt_value {
+typedef struct nbt_value {
 	unsigned char* raw_bytes;
 	union {
 		unsigned char byte_value;
@@ -41,17 +35,15 @@ struct nbt_value {
 		int* int_array_value;
 		long* long_array_value;
 	};
-};
-typedef struct nbt_value nbt_value;
+} nbt_value;
 
-struct nbt_tag {
+typedef struct nbt_tag {
 	char* name;             // Name of the tag
 	nbt_value* value;       // Value of the tag
 	nbt_type type;          // Type of the tag
 	struct nbt_tag* parent; // Pointer to the parent tag
-};
-typedef struct nbt_tag nbt_tag;
+} nbt_tag;
 
-long read_big_endian(unsigned char* data, int len);
+struct compound_tag* parse_tree(const unsigned char* data, int length);
 
 #endif

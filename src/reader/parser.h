@@ -1,9 +1,8 @@
 #ifndef OVERVIEWER_PARSER_H
 #define OVERVIEWER_PARSER_H
 
-// #include "nbt.h"
-// #include "list.h"
+#include "../nbt/nbt.h"
 
-// nbt_node* parse_chunk(unsigned char* data, int length);
+compound_tag* parse_chunk(unsigned char* data, int length);
 
 #endif
