@@ -56,6 +56,24 @@ static void read_long(const unsigned char* data, int* offset) {
 	printf("short name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
+// TODO: float reading, fine for now as we don't need it
+static void read_float(const unsigned char* data, int* offset) {
+	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
+	unsigned char* name = read_bytes(data, offset, name_length);
+	int payload = (int) read_big_endian(read_bytes(data, offset, 4), 4);
+
+	printf("float name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+}
+
+// TODO: double reading, fine for now as we don't need it
+static void read_double(const unsigned char* data, int* offset) {
+	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
+	unsigned char* name = read_bytes(data, offset, name_length);
+	int payload = (int) read_big_endian(read_bytes(data, offset, 8), 8);
+
+	printf("double name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+}
+
 static void read_compound(const unsigned char* data, int* offset) {
 	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
 	unsigned char* name = read_bytes(data, offset, name_length);
@@ -76,8 +94,8 @@ static void read_new_tag(const unsigned char* data, int* offset) {
 		case TAG_Short: read_short(data, offset); break;
 		case TAG_Int: read_int(data, offset); break;
 		case TAG_Long: read_long(data, offset); break;
-		case TAG_Float: break;
-		case TAG_Double: break;
+		case TAG_Float: read_float(data, offset); break;
+		case TAG_Double: read_double(data, offset); break;
 		case TAG_Byte_Array: break;
 		case TAG_String: break;
 		case TAG_List: break;
