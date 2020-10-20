@@ -18,4 +18,16 @@ enum nbt_type {
 };
 typedef enum nbt_type nbt_type;
 
+struct nbt_tree {
+
+};
+typedef struct nbt_tree nbt_tree;
+
+struct nbt_tag {
+
+};
+typedef struct nbt_tag nbt_tag;
+
+long read_big_endian(unsigned char* data, int len);
+
 #endif

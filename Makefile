@@ -1,13 +1,12 @@
 CC = clang
 CFLAGS = -Wall
 SRC = 	src/overviewer.c \
-		src/reader/reader.c \
-		src/reader/parser.c
+		src/nbt/nbt.c
 BIN = overviewer
-LIB = -lz -Ilibs/cNBT #-Llibs/cNBT -lnbt
+LIB = -lz
 
 all: $(SRC)
-	$(CC) $(SRC) $(CFLAGS) $(LIB) -o
+	$(CC) $(SRC) $(CFLAGS) $(LIB) -o $(BIN)
 
 clean:
 	rm $(BIN)
