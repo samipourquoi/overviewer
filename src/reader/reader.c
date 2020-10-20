@@ -36,6 +36,8 @@ int read_region_file(char* path, int chunkX, int chunkZ) {
 	int data_length = 16777216*chunk_header[0] + 65536*chunk_header[1] + 256*chunk_header[2] + 1*chunk_header[3]-1;
 	unsigned char* uncompressed_data = read_chunk_data(region, data_length, &final_length);
 
+	parse_chunk(uncompressed_data, final_length);
+
 #ifdef DEBUG
 	FILE* foo = fopen("chunk.nbt", "wb+");
 	fwrite(uncompressed_data, 1, final_length, foo);
