@@ -23,8 +23,8 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 	}
  */
 	FILE* file = fopen("test.nbt", "rb");
-	unsigned char buf[44];
-	fread(buf, 1, 44, file);
+	unsigned char buf[0x33];
+	fread(buf, 1, 0x33, file);
 	// parse_tree(data, length);
 	parse_tree(buf, sizeof buf);
 	fclose(file);

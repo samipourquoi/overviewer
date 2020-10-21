@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void read_new_tag(const unsigned char* data, int* offset);
+static void read_new_tag(const unsigned char* data, int* offset, int named);
 
 static long read_big_endian(unsigned char* data, int len) {
 	long value = 0;
@@ -24,105 +24,108 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 	return bytes;
 }
 
-static void read_int(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 4), 4);
+#define READ_NAME ( named? read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
+#define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
 
+static void read_int(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(4);
 	printf("int name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
-static void read_byte(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 1), 1);
-
+static void read_byte(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(1);
 	printf("byte name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
-static void read_short(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-
+static void read_short(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(2);
 	printf("short name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
-static void read_long(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 8), 8);
-
+static void read_long(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(8);
 	printf("short name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
 // TODO: float reading, fine for now as we don't need it
-static void read_float(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 4), 4);
-
+static void read_float(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(4);
 	printf("float name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
 // TODO: double reading, fine for now as we don't need it
-static void read_double(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload = (int) read_big_endian(read_bytes(data, offset, 8), 8);
-
+static void read_double(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload = READ_BE(8);
 	printf("double name: %s; int payload: %d offset: %x\n", name, payload, *offset);
 }
 
-static void read_byte_array(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload_length = (int) read_big_endian(read_bytes(data, offset, 4), 4);
+static void read_byte_array(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload_length = READ_BE(4);
 	unsigned char* payload = read_bytes(data, offset, payload_length);
-
 	printf("byte array name: %s; payload length: %d offset: %x\n", name, payload_length, *offset);
 }
 
-static void read_string(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	int payload_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
+static void read_string(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME; int payload_length = READ_BE(2);
 	unsigned char* payload = read_bytes(data, offset, payload_length);
-
 	printf("byte array name: %s; string: %s offset: %x\n", name, payload, *offset);
 }
 
-static void read_compound(const unsigned char* data, int* offset) {
-	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
-	unsigned char* name = read_bytes(data, offset, name_length);
-	printf("compound name: %s\n", name);
-
-	// Reads the tag inside the compound
-	read_new_tag(data, offset);
+static void read_list(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME;
+	printf("list name: %s; offset: %x\n", name, *offset);
+	read_new_tag(data, offset, 0); // Reads the tags inside the list
 }
 
-static void read_new_tag(const unsigned char* data, int* offset) {
-	int type;
-	do {
-		type = (int) read_big_endian(read_bytes(data, offset, 1), 1);
-		switch (type) {
+static void read_compound(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME;
+	printf("compound name: %s\n", name);
+	read_new_tag(data, offset, 1); // Reads the tags inside the compound
+}
+
+/**
+ * Reads the next tag according to the offset and whether
+ * or not the tags are named.
+ *
+ * @param data
+ * @param offset
+ * @param named
+ * @return 1 if reaches a TAG_End, otherwise 0.
+ */
+static int read_following_tag(const unsigned char* data, int* offset, int named, int type) {
+	switch (type) {
 		default:
-		case TAG_End: return;
-		case TAG_Byte: read_byte(data, offset); break;
-		case TAG_Short: read_short(data, offset); break;
-		case TAG_Int: read_int(data, offset); break;
-		case TAG_Long: read_long(data, offset); break;
-		case TAG_Float: read_float(data, offset); break;
-		case TAG_Double: read_double(data, offset); break;
-		case TAG_Byte_Array: read_byte_array(data, offset); break;
-		case TAG_String: read_string(data, offset); break;
-		case TAG_List: break;
-		case TAG_Compound: read_compound(data, offset); break;
+		case TAG_End: return 1;
+		case TAG_Byte: read_byte(data, offset, named); break;
+		case TAG_Short: read_short(data, offset, named); break;
+		case TAG_Int: read_int(data, offset, named); break;
+		case TAG_Long: read_long(data, offset, named); break;
+		case TAG_Float: read_float(data, offset, named); break;
+		case TAG_Double: read_double(data, offset, named); break;
+		case TAG_Byte_Array: read_byte_array(data, offset, named); break;
+		case TAG_String: read_string(data, offset, named); break;
+		case TAG_List: read_list(data, offset, named); break;
+		case TAG_Compound: read_compound(data, offset, named); break;
 		case TAG_Int_Array: break;
 		case TAG_Long_Array: break;
-		}
-	} while (1);
+	}
+	return 0;
 }
+
+static void read_new_tag(const unsigned char* data, int* offset, int named) {
+	if (named) {
+		while (!read_following_tag(data, offset, named, READ_BE(1)));
+	} else {
+		int list_type = READ_BE(1);
+		int list_length = READ_BE(4);
+		for (int i = 0; i < list_length; i++) {
+			read_following_tag(data, offset, named, list_type);
+		}
+	}
+}
+
+#undef READ_NAME
+#undef READ_BE
 
 /**
  * Parses a nbt tree.
@@ -139,7 +142,7 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 	root.size = 0;
 	int offset = 0;
 
-	read_new_tag(data, &offset);
+	read_new_tag(data, &offset, 1);
 
 	return NULL;
 }
