@@ -83,6 +83,15 @@ static void read_byte_array(const unsigned char* data, int* offset) {
 	printf("byte array name: %s; payload length: %d offset: %x\n", name, payload_length, *offset);
 }
 
+static void read_string(const unsigned char* data, int* offset) {
+	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
+	unsigned char* name = read_bytes(data, offset, name_length);
+	int payload_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
+	unsigned char* payload = read_bytes(data, offset, payload_length);
+
+	printf("byte array name: %s; string: %s offset: %x\n", name, payload, *offset);
+}
+
 static void read_compound(const unsigned char* data, int* offset) {
 	int name_length = (int) read_big_endian(read_bytes(data, offset, 2), 2);
 	unsigned char* name = read_bytes(data, offset, name_length);
@@ -106,7 +115,7 @@ static void read_new_tag(const unsigned char* data, int* offset) {
 		case TAG_Float: read_float(data, offset); break;
 		case TAG_Double: read_double(data, offset); break;
 		case TAG_Byte_Array: read_byte_array(data, offset); break;
-		case TAG_String: break;
+		case TAG_String: read_string(data, offset); break;
 		case TAG_List: break;
 		case TAG_Compound: read_compound(data, offset); break;
 		case TAG_Int_Array: break;
