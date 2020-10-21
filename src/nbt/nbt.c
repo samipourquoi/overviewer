@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void read_new_tag(const unsigned char* data, int* offset, int named);
+static void read_tags_inside(const unsigned char* data, int* offset, int named);
 
 static long read_big_endian(unsigned char* data, int len) {
 	long value = 0;
@@ -74,7 +74,7 @@ static void read_string(const unsigned char* data, int* offset, int named) {
 static void read_list(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME;
 	printf("list name: %s; offset: %x\n", name, *offset);
-	read_new_tag(data, offset, 0); // Reads the tags inside the list
+	read_tags_inside(data, offset, 0); // Reads the tags inside the list
 }
 
 static void read_int_array(const unsigned char* data, int* offset, int named) {
@@ -98,7 +98,7 @@ static void read_long_array(const unsigned char* data, int* offset, int named) {
 static void read_compound(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME;
 	printf("compound name: %s\n", name);
-	read_new_tag(data, offset, 1); // Reads the tags inside the compound
+	read_tags_inside(data, offset, 1); // Reads the tags inside the compound
 }
 
 /**
@@ -130,7 +130,7 @@ static int read_following_tag(const unsigned char* data, int* offset, int named,
 	return 0;
 }
 
-static void read_new_tag(const unsigned char* data, int* offset, int named) {
+static void read_tags_inside(const unsigned char* data, int* offset, int named) {
 	if (named) {
 		while (!read_following_tag(data, offset, named, READ_BE(1)));
 	} else {
@@ -160,7 +160,7 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 	root.size = 0;
 	int offset = 0;
 
-	read_new_tag(data, &offset, 1);
+	read_tags_inside(data, &offset, 1);
 
 	return NULL;
 }
