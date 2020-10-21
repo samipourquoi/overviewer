@@ -29,34 +29,34 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 
 static void read_int(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(4);
-	printf("int name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("int name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 static void read_byte(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(1);
-	printf("byte name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("byte name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 static void read_short(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(2);
-	printf("short name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("short name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 static void read_long(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(8);
-	printf("short name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("long name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 // TODO: float reading, fine for now as we don't need it
 static void read_float(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(4);
-	printf("float name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("float name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 // TODO: double reading, fine for now as we don't need it
 static void read_double(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload = READ_BE(8);
-	printf("double name: %s; int payload: %d offset: %x\n", name, payload, *offset);
+	printf("double name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
 static void read_byte_array(const unsigned char* data, int* offset, int named) {
@@ -68,7 +68,7 @@ static void read_byte_array(const unsigned char* data, int* offset, int named) {
 static void read_string(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME; int payload_length = READ_BE(2);
 	unsigned char* payload = read_bytes(data, offset, payload_length);
-	printf("byte array name: %s; string: %s offset: %x\n", name, payload, *offset);
+	printf("string name: %s; payload: %s offset: %x\n", name, payload, *offset);
 }
 
 static void read_list(const unsigned char* data, int* offset, int named) {
@@ -80,10 +80,19 @@ static void read_list(const unsigned char* data, int* offset, int named) {
 static void read_int_array(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME;
 	int length = READ_BE(4);
+	printf("int array name: %s; length: %d; offset: %x\n", name, length, *offset);
 	for (int i = 0; i < length; i++) {
 		read_int(data, offset, 0);
 	}
-	printf("int array name: %s; length: %d; offset: %x\n", name, length, *offset);
+}
+
+static void read_long_array(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME;
+	int length = READ_BE(4);
+	printf("long array name: %s; length: %d; offset: %x\n", name, length, *offset);
+	for (int i = 0; i < length; i++) {
+		read_long(data, offset, 0);
+	}
 }
 
 static void read_compound(const unsigned char* data, int* offset, int named) {
@@ -116,7 +125,7 @@ static int read_following_tag(const unsigned char* data, int* offset, int named,
 		case TAG_List: read_list(data, offset, named); break;
 		case TAG_Compound: read_compound(data, offset, named); break;
 		case TAG_Int_Array: read_int_array(data, offset, named); break;
-		case TAG_Long_Array: break;
+		case TAG_Long_Array: read_long_array(data, offset, named); break;
 	}
 	return 0;
 }
