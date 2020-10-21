@@ -77,6 +77,15 @@ static void read_list(const unsigned char* data, int* offset, int named) {
 	read_new_tag(data, offset, 0); // Reads the tags inside the list
 }
 
+static void read_int_array(const unsigned char* data, int* offset, int named) {
+	unsigned char* name = READ_NAME;
+	int length = READ_BE(4);
+	for (int i = 0; i < length; i++) {
+		read_int(data, offset, 0);
+	}
+	printf("int array name: %s; length: %d; offset: %x\n", name, length, *offset);
+}
+
 static void read_compound(const unsigned char* data, int* offset, int named) {
 	unsigned char* name = READ_NAME;
 	printf("compound name: %s\n", name);
@@ -106,7 +115,7 @@ static int read_following_tag(const unsigned char* data, int* offset, int named,
 		case TAG_String: read_string(data, offset, named); break;
 		case TAG_List: read_list(data, offset, named); break;
 		case TAG_Compound: read_compound(data, offset, named); break;
-		case TAG_Int_Array: break;
+		case TAG_Int_Array: read_int_array(data, offset, named); break;
 		case TAG_Long_Array: break;
 	}
 	return 0;
