@@ -7,7 +7,7 @@
 struct compound_tag {
 	int size;
 	struct nbt_tag* to_tag;
-	struct nbt_tag* values[5]; // TODO: dynamic allocation
+	struct nbt_tag* values[COMPOUND_LENGTH]; // TODO: dynamic allocation
 };
 typedef struct compound_tag compound_tag;
 

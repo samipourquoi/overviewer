@@ -22,10 +22,12 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 		printf("\n");
 	}
  */
+	// parse_tree(data, length);
+
+    // Debugging
 	FILE* file = fopen("test.nbt", "rb");
 	unsigned char buf[0x34];
-	fread(buf, 1, 0x34, file);
-	// parse_tree(data, length);
+	fread(buf, 1, sizeof buf, file);
 	parse_tree(buf, sizeof buf);
 	fclose(file);
 	return NULL;

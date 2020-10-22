@@ -4,6 +4,7 @@ overviewer
 # Debug
 chunk.nbt
 test.nbt
+overviewer.dSYM
 
 # IDEs
 .vscode

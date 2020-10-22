@@ -15,7 +15,7 @@ static long read_big_endian(unsigned char* data, int len) {
 }
 
 static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) {
-	unsigned char* bytes = malloc(n);
+	unsigned char* bytes = (unsigned char*) malloc(n * sizeof(char));
 	for (int i = 0; i < n; i++) {
 		bytes[i] = data[(*offset)++];
 		// printf("%x ", bytes[i]);
@@ -27,6 +27,8 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
 #define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
 
+// This is just so that I can track that struct with
+// IntelliJ debugger
 nbt_tag* da_tag;
 
 static void read_int(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -38,10 +40,10 @@ static void read_int(const unsigned char* data, int* offset, int named, compound
 
 	int_tag.name = name;
 	int_tag.type = TAG_Int;
-	// int_tag.parent = compound->to_tag;
+	int_tag.parent = compound->to_tag;
 	int_tag.value = &int_value;
 
-	da_tag = &int_tag;
+	da_tag = &int_tag; // Just for debugging
 	append_tag(compound, &int_tag);
 
 	printf("int name: %s; payload: %d offset: %x\n", name, payload, *offset);
@@ -148,12 +150,12 @@ static int read_following_tag(const unsigned char* data, int* offset, int named,
 static void read_tags_inside(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	if (named) {
 		while (!read_following_tag(data, offset, named, READ_BE(1), compound));
-	// } else {
-	// 	int list_type = READ_BE(1);
-	// 	int list_length = READ_BE(4);
-	// 	for (int i = 0; i < list_length; i++) {
-	// 		read_following_tag(data, offset, named, list_type, compound);
-	// 	}
+	} else {
+		int list_type = READ_BE(1);
+		int list_length = READ_BE(4);
+		for (int i = 0; i < list_length; i++) {
+			read_following_tag(data, offset, named, list_type, compound);
+		}
 	}
 }
 
@@ -163,8 +165,8 @@ static void read_tags_inside(const unsigned char* data, int* offset, int named, 
  * @warning
  * THIS FUNCTION ONLY ACCEPTS WELL-FORMED NBT TREES.
  *
- * @param data
- * @param length
+ * @param data Uncomrpessed nbt data
+ * @param length Length of that data
  * @return
  */
 compound_tag* parse_tree(const unsigned char* data, int length) {
@@ -180,7 +182,6 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 
 	root.size = 0;
 	root.to_tag = &root_tag;
-	// root.values = malloc(2 * sizeof(nbt_tag*));
 
 	// READ_BE doesn't work without having a pointer 'offset'
 	int file_offset = 0;
@@ -188,12 +189,11 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 
 	// Reads the root compound, to avoid having
 	// two nested root compounds.
-	// read_following_tag(data, offset, 1, READ_BE(1), &root);
+	read_following_tag(data, offset, 1, READ_BE(1), &root);
 
 	read_tags_inside(data, offset, 1, &root);
 
-	printf("name: %d\n", get_tag_from_name(&root, "A") == NULL);
-	// printf("name: %s\n", root.to_tag->name);
+	printf("pointer to tag: %p\n", get_tag_from_name(&root, "A"));
 
 	return NULL;
 }
