@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 SRC = 	src/overviewer.c \
 		src/nbt/nbt.c \
 		src/nbt/compound.c \
