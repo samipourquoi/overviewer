@@ -26,6 +26,7 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
 #define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
+#define CREATE_VALUE ( (nbt_value*) malloc(sizeof(nbt_value)) )
 #define CREATE_TAG(NAME, VALUE, TYPE, PARENT)   nbt_tag* tag = malloc(sizeof(nbt_tag)); \
 												tag->name = NAME; \
 												tag->type = TYPE; \
@@ -33,18 +34,18 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 												tag->value = VALUE;
 
 static void read_int(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	nbt_value* value = malloc(sizeof(nbt_value));
+	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
 	value->int_value = READ_BE(4);
-
 	CREATE_TAG(name, value, TAG_Int, compound->to_tag);
 	append_tag(compound, tag);
-
 	printf("int name: %s; payload: %d offset: %x\n", tag->name, tag->value->int_value, *offset);
 }
 
 static void read_byte(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(1);
+	nbt_value* value = malloc(sizeof(nbt_value));
+	char* name = READ_NAME;
+	int payload = READ_BE(1);
 	printf("byte name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
 
@@ -202,3 +203,5 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 
 #undef READ_NAME
 #undef READ_BE
+#undef CREATE_VALUE
+#undef CREATE_TAG
