@@ -27,24 +27,19 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
 #define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
 
-// This is just so that I can track that struct with
-// IntelliJ debugger
-nbt_tag* da_tag;
-
 static void read_int(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME; int payload = READ_BE(4);
-	nbt_tag int_tag;
-	nbt_value int_value;
+	nbt_tag* int_tag = malloc(sizeof(nbt_tag));
+	nbt_value* int_value = malloc(sizeof(nbt_value));
 
-	int_value.int_value = payload;
+	int_value->int_value = payload;
 
-	int_tag.name = name;
-	int_tag.type = TAG_Int;
-	int_tag.parent = compound->to_tag;
-	int_tag.value = &int_value;
+	int_tag->name = name;
+	int_tag->type = TAG_Int;
+	int_tag->parent = compound->to_tag;
+	int_tag->value = int_value;
 
-	da_tag = &int_tag; // Just for debugging
-	append_tag(compound, &int_tag);
+	append_tag(compound, int_tag);
 
 	printf("int name: %s; payload: %d offset: %x\n", name, payload, *offset);
 }
@@ -193,7 +188,7 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 
 	read_tags_inside(data, offset, 1, &root);
 
-	printf("pointer to tag: %p\n", get_tag_from_name(&root, "A"));
+	printf("pointer to tag: %s\n", get_tag_from_name(&root, "A")->name);
 
 	return NULL;
 }
