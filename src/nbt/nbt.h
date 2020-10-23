@@ -28,7 +28,7 @@ typedef struct nbt_value {
 		long long_value;
 		float float_value;
 		double double_value;
-		char* byte_array_value;
+		signed char* byte_array_value;
 		char* string_value;
 		struct compound_tag* list_value; // Lists are considered as compounds
 		struct compound_tag* compound_value;
@@ -46,5 +46,6 @@ typedef struct nbt_tag {
 } nbt_tag;
 
 struct compound_tag* parse_tree(const unsigned char* data, int length);
+int nbt_free(struct compound_tag* compound);
 
 #endif

@@ -19,9 +19,9 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 	unsigned char* bytes = (unsigned char*) malloc(n * sizeof(char));
 	for (int i = 0; i < n; i++) {
 		bytes[i] = data[(*offset)++];
-		printf("%x ", bytes[i]);
+		// printf("%x ", bytes[i]);
 	}
-	printf("\n");
+	// printf("\n");
 	return bytes;
 }
 
@@ -237,6 +237,44 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 	printf("value of tag 'A': %s\n", root.values[0]->value->compound_value->values[2]->value->list_value->values[1]->value->string_value);
 
 	return NULL;
+}
+
+/**
+ * Frees the memory of an NBT tree.
+ *
+ * @param compound The NBT tree you want to free
+ * @return 0 is the freeing operations succeeded, 1 otherwise.
+ */
+int nbt_free(struct compound_tag* compound) {
+	for (int i = 0; i < compound->size; i++) {
+		nbt_tag* tag = compound->values[i];
+		switch (tag->type) {
+		case TAG_List:
+			nbt_free(tag->value->list_value);
+			free(tag->value->list_value);
+			break;
+		case TAG_Compound:
+			nbt_free(tag->value->compound_value);
+			free(tag->value->compound_value);
+			break;
+		case TAG_Byte_Array:
+			free(tag->value->byte_array_value);
+			break;
+		case TAG_String:
+			free(tag->value->string_value);
+			break;
+		case TAG_Int_Array:
+			free(tag->value->int_array_value);
+			break;
+		case TAG_Long_Array:
+			free(tag->value->long_array_value);
+			break;
+		}
+
+		free(tag->name);
+		free(tag->value);
+		free(tag);
+	}
 }
 
 #undef READ_NAME
