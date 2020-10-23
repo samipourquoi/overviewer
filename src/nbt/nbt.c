@@ -26,22 +26,21 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
 #define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
+#define CREATE_TAG(NAME, VALUE, TYPE, PARENT)   nbt_tag* tag = malloc(sizeof(nbt_tag)); \
+												tag->name = NAME; \
+												tag->type = TYPE; \
+												tag->parent = PARENT; \
+												tag->value = VALUE;
 
 static void read_int(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(4);
-	nbt_tag* int_tag = malloc(sizeof(nbt_tag));
-	nbt_value* int_value = malloc(sizeof(nbt_value));
+	nbt_value* value = malloc(sizeof(nbt_value));
+	char* name = READ_NAME;
+	value->int_value = READ_BE(4);
 
-	int_value->int_value = payload;
+	CREATE_TAG(name, value, TAG_Int, compound->to_tag);
+	append_tag(compound, tag);
 
-	int_tag->name = name;
-	int_tag->type = TAG_Int;
-	int_tag->parent = compound->to_tag;
-	int_tag->value = int_value;
-
-	append_tag(compound, int_tag);
-
-	printf("int name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	printf("int name: %s; payload: %d offset: %x\n", tag->name, tag->value->int_value, *offset);
 }
 
 static void read_byte(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -109,6 +108,14 @@ static void read_long_array(const unsigned char* data, int* offset, int named, c
 
 static void read_compound(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
+	nbt_tag* int_tag = malloc(sizeof(nbt_tag));
+	nbt_value* compound_value = malloc(sizeof(nbt_value));
+	compound_value->compound_value = compound_value;
+	int_tag->name = name;
+	int_tag->type = TAG_Int;
+	int_tag->parent = compound->to_tag;
+	int_tag->value = compound_value;
+	append_tag(compound, int_tag);
 	printf("compound name: %s\n", name);
 	read_tags_inside(data, offset, 1, compound); // Reads the tags inside the compound
 }
