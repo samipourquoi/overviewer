@@ -35,7 +35,7 @@ typedef struct nbt_value {
 		int* int_array_value;
 		long* long_array_value;
 	};
-	int array_length;// = -1;
+	int array_length;
 } nbt_value;
 
 typedef struct nbt_tag {
@@ -45,7 +45,7 @@ typedef struct nbt_tag {
 	struct nbt_tag* parent; // Pointer to the parent tag
 } nbt_tag;
 
-struct compound_tag* parse_tree(const unsigned char* data, int length);
+struct compound_tag* nbt_parse_tree(const unsigned char* data, int length);
 int nbt_free(struct compound_tag* compound);
 
 #endif

@@ -39,7 +39,7 @@ static void read_int(const unsigned char* data, int* offset, int named, compound
 	nbt_value* value = CREATE_VALUE;
 	value->int_value = READ_BE(4);
 	CREATE_TAG(name, value, TAG_Int, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_byte(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -47,7 +47,7 @@ static void read_byte(const unsigned char* data, int* offset, int named, compoun
 	nbt_value* value = CREATE_VALUE;
 	value->byte_value = READ_BE(1);
 	CREATE_TAG(name, value, TAG_Byte, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_short(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -55,7 +55,7 @@ static void read_short(const unsigned char* data, int* offset, int named, compou
 	nbt_value* value = CREATE_VALUE;
 	value->short_value = READ_BE(2);
 	CREATE_TAG(name, value, TAG_Short, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_long(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -63,7 +63,7 @@ static void read_long(const unsigned char* data, int* offset, int named, compoun
 	nbt_value* value = CREATE_VALUE;
 	value->long_value = READ_BE(8);
 	CREATE_TAG(name, value, TAG_Long, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 // TODO: float reading, fine for now as we don't need it
@@ -72,7 +72,7 @@ static void read_float(const unsigned char* data, int* offset, int named, compou
 	nbt_value* value = CREATE_VALUE;
 	value->float_value = READ_BE(4);
 	CREATE_TAG(name, value, TAG_Float, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 // TODO: double reading, fine for now as we don't need it
@@ -81,7 +81,7 @@ static void read_double(const unsigned char* data, int* offset, int named, compo
 	nbt_value* value = CREATE_VALUE;
 	value->double_value = READ_BE(8);
 	CREATE_TAG(name, value, TAG_Double, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_byte_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -94,7 +94,7 @@ static void read_byte_array(const unsigned char* data, int* offset, int named, c
 	value->byte_array_value = payload;
 	value->array_length = length;
 	CREATE_TAG(name, value, TAG_Byte, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_string(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -106,7 +106,7 @@ static void read_string(const unsigned char* data, int* offset, int named, compo
 	value->string_value = string;
 	value->array_length = string_length;
 	CREATE_TAG(name, value, TAG_String, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_list(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -119,7 +119,7 @@ static void read_list(const unsigned char* data, int* offset, int named, compoun
 	new_list->to_tag = tag;
 	value->list_value = new_list;
 
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 	read_tags_inside(data, offset, 0, new_list); // Reads the tags inside the compound
 }
 
@@ -133,7 +133,7 @@ static void read_int_array(const unsigned char* data, int* offset, int named, co
 	value->int_array_value = payload;
 	value->array_length = length;
 	CREATE_TAG(name, value, TAG_Int_Array, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_long_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -146,7 +146,7 @@ static void read_long_array(const unsigned char* data, int* offset, int named, c
 	value->long_array_value = payload;
 	value->array_length = length;
 	CREATE_TAG(name, value, TAG_Long_Array, compound->to_tag);
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 }
 
 static void read_compound(const unsigned char* data, int* offset, int named, compound_tag* compound) {
@@ -159,7 +159,7 @@ static void read_compound(const unsigned char* data, int* offset, int named, com
 	new_compound->to_tag = tag;
 	value->compound_value = new_compound;
 
-	append_tag(compound, tag);
+	cmpd_append_entry(compound, tag);
 	read_tags_inside(data, offset, 1, new_compound); // Reads the tags inside the compound
 }
 
@@ -214,7 +214,7 @@ static void read_tags_inside(const unsigned char* data, int* offset, int named, 
  * @param length Length of that data
  * @return
  */
-compound_tag* parse_tree(const unsigned char* data, int length) {
+compound_tag* nbt_parse_tree(const unsigned char* data, int length) {
 	compound_tag root;
 	nbt_tag root_tag;
 	char* name = "root";

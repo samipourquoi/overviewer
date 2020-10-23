@@ -11,7 +11,7 @@ struct compound_tag {
 };
 typedef struct compound_tag compound_tag;
 
-struct nbt_tag* get_tag_from_name(compound_tag* compound, char* name);
-void append_tag(compound_tag* compound, struct nbt_tag* tag);
+struct nbt_tag* cmpd_get_from_name(compound_tag* compound, char* name);
+void cmpd_append_entry(compound_tag* compound, struct nbt_tag* tag);
 
 #endif
