@@ -22,19 +22,20 @@ typedef enum nbt_type {
 typedef struct nbt_value {
 	unsigned char* raw_bytes;
 	union {
-		unsigned char byte_value;
+		signed char byte_value;
 		short short_value;
 		int int_value;
 		long long_value;
 		float float_value;
 		double double_value;
-		unsigned char* byte_array_value;
+		char* byte_array_value;
 		char* string_value;
-		struct nbt_tag* list_value;
+		struct compound_tag* list_value; // Lists are considered as compounds
 		struct compound_tag* compound_value;
 		int* int_array_value;
 		long* long_array_value;
 	};
+	int array_length;// = -1;
 } nbt_value;
 
 typedef struct nbt_tag {

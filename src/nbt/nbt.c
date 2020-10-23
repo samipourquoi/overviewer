@@ -11,6 +11,7 @@ static long read_big_endian(unsigned char* data, int len) {
 	for (int i = len; i > 0; i--) {
 		value += data[i-1] * (long) pow(16, (len-i)*2);
 	}
+	free(data);
 	return value;
 }
 
@@ -18,14 +19,14 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 	unsigned char* bytes = (unsigned char*) malloc(n * sizeof(char));
 	for (int i = 0; i < n; i++) {
 		bytes[i] = data[(*offset)++];
-		// printf("%x ", bytes[i]);
+		printf("%x ", bytes[i]);
 	}
-	// printf("\n");
+	printf("\n");
 	return bytes;
 }
 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
-#define READ_BE(SIZE) ( (int) read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
+#define READ_BE(SIZE) ( read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
 #define CREATE_VALUE ( (nbt_value*) malloc(sizeof(nbt_value)) )
 #define CREATE_TAG(NAME, VALUE, TYPE, PARENT)   nbt_tag* tag = malloc(sizeof(nbt_tag)); \
 												tag->name = NAME; \
@@ -34,91 +35,132 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 												tag->value = VALUE;
 
 static void read_int(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
+	nbt_value* value = CREATE_VALUE;
 	value->int_value = READ_BE(4);
 	CREATE_TAG(name, value, TAG_Int, compound->to_tag);
 	append_tag(compound, tag);
-	printf("int name: %s; payload: %d offset: %x\n", tag->name, tag->value->int_value, *offset);
 }
 
 static void read_byte(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	nbt_value* value = malloc(sizeof(nbt_value));
 	char* name = READ_NAME;
-	int payload = READ_BE(1);
-	printf("byte name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	nbt_value* value = CREATE_VALUE;
+	value->byte_value = READ_BE(1);
+	CREATE_TAG(name, value, TAG_Byte, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_short(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(2);
-	printf("short name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	char* name = READ_NAME;
+	nbt_value* value = CREATE_VALUE;
+	value->short_value = READ_BE(2);
+	CREATE_TAG(name, value, TAG_Short, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_long(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(8);
-	printf("long name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	char* name = READ_NAME;
+	nbt_value* value = CREATE_VALUE;
+	value->long_value = READ_BE(8);
+	CREATE_TAG(name, value, TAG_Long, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 // TODO: float reading, fine for now as we don't need it
 static void read_float(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(4);
-	printf("float name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	char* name = READ_NAME;
+	nbt_value* value = CREATE_VALUE;
+	value->float_value = READ_BE(4);
+	CREATE_TAG(name, value, TAG_Float, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 // TODO: double reading, fine for now as we don't need it
 static void read_double(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload = READ_BE(8);
-	printf("double name: %s; payload: %d offset: %x\n", name, payload, *offset);
+	char* name = READ_NAME;
+	nbt_value* value = CREATE_VALUE;
+	value->double_value = READ_BE(8);
+	CREATE_TAG(name, value, TAG_Double, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_byte_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload_length = READ_BE(4);
-	unsigned char* payload = read_bytes(data, offset, payload_length);
-	printf("byte array name: %s; payload length: %d offset: %x\n", name, payload_length, *offset);
+	char* name = READ_NAME;
+	int length = READ_BE(4);
+	signed char* payload = malloc(length * sizeof(char)); //read_bytes(data, offset, length*4);
+	for (int i = 0; i < length; i++) payload[i] = (char) READ_BE(1);
+
+	nbt_value* value = CREATE_VALUE;
+	value->byte_array_value = payload;
+	value->array_length = length;
+	CREATE_TAG(name, value, TAG_Byte, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_string(const unsigned char* data, int* offset, int named, compound_tag* compound) {
-	char* name = READ_NAME; int payload_length = READ_BE(2);
-	unsigned char* payload = read_bytes(data, offset, payload_length);
-	printf("string name: %s; payload: %s offset: %x\n", name, payload, *offset);
+	char* name = READ_NAME;
+	int string_length = READ_BE(2);
+	char* string = (char*) read_bytes(data, offset, string_length);
+
+	nbt_value* value = CREATE_VALUE;
+	value->string_value = string;
+	value->array_length = string_length;
+	CREATE_TAG(name, value, TAG_String, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_list(const unsigned char* data, int* offset, int named, compound_tag* compound) {
+	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	printf("list name: %s; offset: %x\n", name, *offset);
-	read_tags_inside(data, offset, 0, compound); // Reads the tags inside the list
+	compound_tag* new_list = malloc(sizeof(compound_tag)); // Lists are considered as compounds
+	CREATE_TAG(name, value, TAG_List, compound->to_tag);
+
+	new_list->size = 0;
+	new_list->to_tag = tag;
+	value->list_value = new_list;
+
+	append_tag(compound, tag);
+	read_tags_inside(data, offset, 0, new_list); // Reads the tags inside the compound
 }
 
 static void read_int_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int length = READ_BE(4);
-	printf("int array name: %s; length: %d; offset: %x\n", name, length, *offset);
-	for (int i = 0; i < length; i++) {
-		read_int(data, offset, 0, compound);
-	}
+	int* payload = malloc(length * sizeof(int)); //read_bytes(data, offset, length*4);
+	for (int i = 0; i < length; i++) payload[i] = READ_BE(4);
+
+	nbt_value* value = CREATE_VALUE;
+	value->int_array_value = payload;
+	value->array_length = length;
+	CREATE_TAG(name, value, TAG_Int_Array, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_long_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int length = READ_BE(4);
-	printf("long array name: %s; length: %d; offset: %x\n", name, length, *offset);
-	for (int i = 0; i < length; i++) {
-		read_long(data, offset, 0, compound);
-	}
+	long* payload = malloc(length * sizeof(long)); //read_bytes(data, offset, length*4);
+	for (int i = 0; i < length; i++) payload[i] = READ_BE(8);
+
+	nbt_value* value = CREATE_VALUE;
+	value->long_array_value = payload;
+	value->array_length = length;
+	CREATE_TAG(name, value, TAG_Long_Array, compound->to_tag);
+	append_tag(compound, tag);
 }
 
 static void read_compound(const unsigned char* data, int* offset, int named, compound_tag* compound) {
+	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	nbt_tag* int_tag = malloc(sizeof(nbt_tag));
-	nbt_value* compound_value = malloc(sizeof(nbt_value));
-	compound_value->compound_value = compound_value;
-	int_tag->name = name;
-	int_tag->type = TAG_Int;
-	int_tag->parent = compound->to_tag;
-	int_tag->value = compound_value;
-	append_tag(compound, int_tag);
-	printf("compound name: %s\n", name);
-	read_tags_inside(data, offset, 1, compound); // Reads the tags inside the compound
+	compound_tag* new_compound = malloc(sizeof(compound_tag));
+	CREATE_TAG(name, value, TAG_Compound, compound->to_tag);
+
+	new_compound->size = 0;
+	new_compound->to_tag = tag;
+	value->compound_value = new_compound;
+
+	append_tag(compound, tag);
+	read_tags_inside(data, offset, 1, new_compound); // Reads the tags inside the compound
 }
 
 /**
@@ -190,13 +232,9 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 	int file_offset = 0;
 	int *offset = &file_offset;
 
-	// Reads the root compound, to avoid having
-	// two nested root compounds.
-	read_following_tag(data, offset, 1, READ_BE(1), &root);
-
 	read_tags_inside(data, offset, 1, &root);
 
-	printf("pointer to tag: %s\n", get_tag_from_name(&root, "A")->name);
+	printf("value of tag 'A': %s\n", root.values[0]->value->compound_value->values[2]->value->list_value->values[1]->value->string_value);
 
 	return NULL;
 }
