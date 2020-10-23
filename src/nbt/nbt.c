@@ -236,7 +236,7 @@ compound_tag* parse_tree(const unsigned char* data, int length) {
 
 	printf("value of tag 'A': %s\n", root.values[0]->value->compound_value->values[2]->value->list_value->values[1]->value->string_value);
 
-	return NULL;
+	return root.values[0]->value->compound_value;
 }
 
 /**
