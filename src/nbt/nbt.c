@@ -16,7 +16,7 @@ static long read_big_endian(unsigned char* data, int len) {
 }
 
 static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) {
-	unsigned char* bytes = (unsigned char*) malloc(n * sizeof(char));
+	unsigned char* bytes = (unsigned char*) calloc(n, sizeof(char));
 	for (int i = 0; i < n; i++) {
 		bytes[i] = data[(*offset)++];
 		// printf("%x ", bytes[i]);
@@ -27,8 +27,8 @@ static unsigned char* read_bytes(const unsigned char* data, int* offset, int n) 
 
 #define READ_NAME ( named? (char*) read_bytes(data, offset, (int) read_big_endian(read_bytes(data, offset, 2), 2)): NULL )
 #define READ_BE(SIZE) ( read_big_endian(read_bytes(data, offset, SIZE), SIZE) )
-#define CREATE_VALUE ( (nbt_value*) malloc(sizeof(nbt_value)) )
-#define CREATE_TAG(NAME, VALUE, TYPE, PARENT)   nbt_tag* tag = malloc(sizeof(nbt_tag)); \
+#define CREATE_VALUE ( (nbt_value*) calloc(1, sizeof(nbt_value)) )
+#define CREATE_TAG(NAME, VALUE, TYPE, PARENT)   nbt_tag* tag = calloc(1, sizeof(nbt_tag)); \
 												tag->name = NAME; \
 												tag->type = TYPE; \
 												tag->parent = PARENT; \
