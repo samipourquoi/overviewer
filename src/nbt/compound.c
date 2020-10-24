@@ -36,7 +36,9 @@ nbt_tag* cmpd_get_from_path(compound_tag* compound, char* path) {
 	while ((token = strsep(&path_copy, "."))) {
 		nbt_tag* tag = cmpd_get_from_name(current_compound, token);
 		if (tag == NULL) {
-			goto end;
+			printf("Not found...\n");
+			free(path_copy);
+			return NULL;
 		} if (tag->type == TAG_Compound) {
 			current_compound = tag->value->compound_value;
 		} else if (tag->type == TAG_List) {
@@ -46,10 +48,8 @@ nbt_tag* cmpd_get_from_path(compound_tag* compound, char* path) {
 			return tag;
 		}
 	}
-
-end:
 	free(path_copy);
-	return NULL;
+	return current_compound->to_tag;
 }
 
 void cmpd_append_entry(compound_tag* compound, nbt_tag* tag) {
