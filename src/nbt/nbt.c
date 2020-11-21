@@ -87,7 +87,7 @@ static void read_double(const unsigned char* data, int* offset, int named, compo
 static void read_byte_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int length = READ_BE(4);
-	signed char* payload = malloc(length * sizeof(char)); //read_bytes(data, offset, length*4);
+	signed char* payload = calloc(length, sizeof(char)); //read_bytes(data, offset, length*4);
 	for (int i = 0; i < length; i++) payload[i] = (char) READ_BE(1);
 
 	nbt_value* value = CREATE_VALUE;
@@ -112,7 +112,7 @@ static void read_string(const unsigned char* data, int* offset, int named, compo
 static void read_list(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	compound_tag* new_list = malloc(sizeof(compound_tag)); // Lists are considered as compounds
+	compound_tag* new_list = calloc(1, sizeof(compound_tag)); // Lists are considered as compounds
 	CREATE_TAG(name, value, TAG_List, compound->to_tag);
 
 	new_list->size = 0;
@@ -126,7 +126,7 @@ static void read_list(const unsigned char* data, int* offset, int named, compoun
 static void read_int_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int length = READ_BE(4);
-	int* payload = malloc(length * sizeof(int)); //read_bytes(data, offset, length*4);
+	int* payload = calloc(length, sizeof(int)); //read_bytes(data, offset, length*4);
 	for (int i = 0; i < length; i++) payload[i] = READ_BE(4);
 
 	nbt_value* value = CREATE_VALUE;
@@ -139,7 +139,7 @@ static void read_int_array(const unsigned char* data, int* offset, int named, co
 static void read_long_array(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int length = READ_BE(4);
-	long* payload = malloc(length * sizeof(long)); //read_bytes(data, offset, length*4);
+	long* payload = calloc(length, sizeof(long)); //read_bytes(data, offset, length*4);
 	for (int i = 0; i < length; i++) payload[i] = READ_BE(8);
 
 	nbt_value* value = CREATE_VALUE;
@@ -152,7 +152,7 @@ static void read_long_array(const unsigned char* data, int* offset, int named, c
 static void read_compound(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	compound_tag* new_compound = malloc(sizeof(compound_tag));
+	compound_tag* new_compound = calloc(1, sizeof(compound_tag));
 	CREATE_TAG(name, value, TAG_Compound, compound->to_tag);
 
 	new_compound->size = 0;
