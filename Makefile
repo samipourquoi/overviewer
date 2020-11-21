@@ -15,5 +15,4 @@ clean:
 	rm $(BIN)
 
 install:
-	git submodule update --init --recursive
-	make -C libs/cNBT libnbt.a
+	git clone -b assets --single-branch https://github.com/samipourquoi/overviewer.git assets

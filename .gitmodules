@@ -1,4 +1,0 @@
-[submodule "assets"]
-	path = assets
-	url = https://github.com/samipourquoi/overviewer.git
-	branch = assets
