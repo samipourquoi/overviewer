@@ -1,5 +1,6 @@
 # Project Specific
 overviewer
+assets/
 
 # Debug
 chunk.nbt
