@@ -3,6 +3,7 @@
 #include <zlib.h>
 #include <math.h>
 #include "reader.h"
+#include "nbt.h"
 
 #define CHUNK_SIZE 4096
 #define DEBUG
