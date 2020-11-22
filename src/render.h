@@ -4,10 +4,9 @@
 #include <cairo/cairo.h>
 
 typedef enum {
-	TOP,
-	LEFT,
-	RIGHT,
-	SIDE
+	TOP     = 0b100,
+	LEFT    = 0b010,
+	RIGHT   = 0b001
 } direction_t;
 
 int render();

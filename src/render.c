@@ -17,35 +17,54 @@ char* get_block_path(char* name) {
 
 cairo_surface_t* render_block(cairo_t* cr, char* name, direction_t direction) {
 	char* path = get_block_path(name);
-	cairo_surface_t *block;
-	block = cairo_image_surface_create_from_png(path);
+	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
+	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
+	cairo_t* iso_cr = cairo_create(iso);
 
+	// Transformation matrices that apply a scaling
+	// and a shearing. It also applies a rotation for the TOP side.
+	// Go look at: http://jeroenhoek.nl/articles/svg-and-isometric-projection.html
 	cairo_matrix_t matrix;
-	matrix.x0 = 0;  matrix.y0 = 0;
-
 	switch (direction) {
 	default:
 	case TOP:
-		matrix.xx = 1;   matrix.xy = 1;
-		matrix.yx = -.5; matrix.yy = .5;
+		matrix.x0 = 15;     matrix.y0 = 0;
+		matrix.xx = .866;   matrix.xy = -.933;
+		matrix.yx = .5;     matrix.yy = .461;
 		break;
 	case LEFT:
-		matrix.xx = 1;   matrix.xy = 0;
-		matrix.yx = .577; matrix.yy = 1;
+		matrix.x0 = 0;      matrix.y0 = 7;
+		matrix.xx = .866;   matrix.xy = 0;
+		matrix.yx = .5;     matrix.yy = 1;
 		break;
 	case RIGHT:
-		matrix.xx = 1;   matrix.xy = 0;
-		matrix.yx = -.577; matrix.yy = 1;
+		matrix.x0 = 14;     matrix.y0 = 15;
+		matrix.xx = .866;   matrix.xy = 0;
+		matrix.yx = -.5;    matrix.yy = 1;
 		break;
 	}
-
-	cairo_transform(cr, &matrix);
-	cairo_set_source_surface(cr, block, 0, 0);
-	cairo_paint(cr);
+	cairo_transform(iso_cr, &matrix);
+	cairo_set_source_surface(iso_cr, block, 0, 0);
+	cairo_paint(iso_cr);
 
 	free(path);
 
-	return block;
+	return iso;
+}
+
+void draw_block(cairo_t* cr, char* name, int x, int y, unsigned char direction) {
+	if (direction & 0b100) {
+		cairo_set_source_surface(cr, render_block(cr, name, TOP), x, y);
+		cairo_paint(cr);
+	}
+	if (direction & 0b010) {
+		cairo_set_source_surface(cr, render_block(cr, name, LEFT), x, y);
+		cairo_paint(cr);
+	}
+	if (direction & 0b001) {
+		cairo_set_source_surface(cr, render_block(cr, name, RIGHT), x, y);
+		cairo_paint(cr);
+	}
 }
 
 int render() {
@@ -54,10 +73,9 @@ int render() {
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 100, 100);
 	cr = cairo_create(surface);
 
-	render_block(cr, "stone", LEFT);
-	render_block(cr, "stone", RIGHT);
-	render_block(cr, "stone", TOP);
-	cairo_surface_write_to_png(surface, "oak.png");
+	draw_block(cr, "white_wool", 0, 0, LEFT | RIGHT | TOP);
+
+	cairo_surface_write_to_png(surface, "render.png");
 
 	return 0;
 }

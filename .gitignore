@@ -6,6 +6,7 @@ assets/
 chunk.nbt
 test.nbt
 overviewer.dSYM
+render.png
 
 # IDEs
 .vscode
