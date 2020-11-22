@@ -48,23 +48,30 @@ cairo_surface_t* render_block(cairo_t* cr, char* name, direction_t direction) {
 	cairo_paint(iso_cr);
 
 	free(path);
+	cairo_surface_destroy(block);
+	cairo_destroy(iso_cr);
 
 	return iso;
 }
 
 void draw_block(cairo_t* cr, char* name, int x, int y, unsigned char direction) {
+	cairo_surface_t* surface = NULL;
 	if (direction & 0b100) {
-		cairo_set_source_surface(cr, render_block(cr, name, TOP), x, y);
+		surface = render_block(cr, name, TOP);
+		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
 	if (direction & 0b010) {
-		cairo_set_source_surface(cr, render_block(cr, name, LEFT), x, y);
+		surface = render_block(cr, name, LEFT);
+		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
 	if (direction & 0b001) {
-		cairo_set_source_surface(cr, render_block(cr, name, RIGHT), x, y);
+		surface = render_block(cr, name, RIGHT);
+		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
+	cairo_surface_destroy(surface);
 }
 
 int render() {
