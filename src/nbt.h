@@ -1,7 +1,7 @@
 #ifndef OVERVIEWER_NBT_H
 #define OVERVIEWER_NBT_H
 
-#include "compound.h"
+#define COMPOUND_LENGTH 50
 
 typedef enum nbt_type {
 	TAG_End         = 0,
@@ -45,6 +45,16 @@ typedef struct nbt_tag {
 	struct nbt_tag* parent; // Pointer to the parent tag
 } nbt_tag;
 
+struct compound_tag {
+	int size;
+	struct nbt_tag* to_tag;
+	struct nbt_tag* values[COMPOUND_LENGTH]; // TODO: dynamic allocation
+};
+typedef struct compound_tag compound_tag;
+
+struct nbt_tag* cmpd_get_from_name(compound_tag* compound, char* name);
+struct nbt_tag* cmpd_get_from_path(compound_tag* compound, char* path);
+void cmpd_append_entry(compound_tag* compound, struct nbt_tag* tag);
 struct compound_tag* nbt_parse_tree(const unsigned char* data, int length);
 int nbt_free(struct compound_tag* compound);
 
