@@ -29,6 +29,42 @@ void draw_model_cube_all(cairo_t* cr, JSON_Object* textures) {
 	draw_texture(cr, texture_name, 0, 0, LEFT | RIGHT | TOP);
 }
 
+void draw_model_cube(cairo_t* cr, JSON_Object* textures) {
+	char texture_name[50];
+	char* top = json_object_get_string(textures, "up");
+	const char* south = json_object_get_string(textures, "south");
+	const char* east = json_object_get_string(textures, "east");
+
+	memcpy(texture_name, &top[16], 50);
+	draw_texture(cr, texture_name, 0, 0, TOP);
+	memcpy(texture_name, &south[16], 50);
+	draw_texture(cr, texture_name, 0, 0, LEFT);
+	memcpy(texture_name, &east[16], 50);
+	draw_texture(cr, texture_name, 0, 0, RIGHT);
+}
+
+void draw_model_cube_bottom_top(cairo_t* cr, JSON_Object* textures) {
+	char texture_name[50];
+	char* top = json_object_get_string(textures, "top");
+	const char* side = json_object_get_string(textures, "side");
+
+	memcpy(texture_name, &top[16], 50);
+	draw_texture(cr, texture_name, 0, 0, TOP);
+	memcpy(texture_name, &side[16], 50);
+	draw_texture(cr, texture_name, 0, 0, LEFT | RIGHT);
+}
+
+void draw_model_cube_column(cairo_t* cr, JSON_Object* textures) {
+	char texture_name[50];
+	char* end = json_object_get_string(textures, "end");
+	const char* side = json_object_get_string(textures, "side");
+
+	memcpy(texture_name, &end[16], 50);
+	draw_texture(cr, texture_name, 0, 0, TOP);
+	memcpy(texture_name, &side[16], 50);
+	draw_texture(cr, texture_name, 0, 0, LEFT | RIGHT);
+}
+
 void draw_block(cairo_t* cr, char* name) {
 	char model_name[50];
 	{
@@ -75,6 +111,13 @@ void draw_block(cairo_t* cr, char* name) {
 		char* parent = json_object_get_string(root, "parent");
 		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
 			draw_model_cube_all(cr, textures);
+		} else if (strcmp(parent, "minecraft:block/cube") == 0) {
+			draw_model_cube(cr, textures);
+		} else if (strcmp(parent, "minecraft:block/cube_column") == 0
+					|| strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
+			draw_model_cube_column(cr, textures);
+		} else if (strcmp(parent, "minecraft:block/cube_bottom_top") == 0) {
+			draw_model_cube_bottom_top(cr, textures);
 		}
 
 		free(model_path);
@@ -147,7 +190,7 @@ int render() {
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 100, 100);
 	cr = cairo_create(surface);
 
-	draw_block(cr, "diamond_block");
+	draw_block(cr, "ancient_debris");
 
 	cairo_surface_write_to_png(surface, "render.png");
 
