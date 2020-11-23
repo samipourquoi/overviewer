@@ -10,7 +10,5 @@ typedef enum {
 } direction_t;
 
 int render();
-char* get_block_path(char* name);
-cairo_surface_t* render_block(cairo_t* cr, char* name, direction_t direction);
 
 #endif

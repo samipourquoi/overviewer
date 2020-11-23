@@ -1,12 +1,10 @@
 CC = gcc
-CFLAGS = -w
+CFLAGS = -Wfatal-errors -g
 BIN = overviewer
 LIB = -lz -lcairo
 
-all: $(BIN)
-
-$(BIN): overviewer.o reader.o render.o nbt.o
-	$(CC) $(CFLAGS) $(LIB) overviewer.o reader.o render.o nbt.o -o $(BIN)
+$(BIN): overviewer.o reader.o render.o nbt.o parson.o
+	$(CC) $(CFLAGS) $(LIB) *.o -o $(BIN)
 
 overviewer.o: src/overviewer.c src/overviewer.h
 	$(CC) $(CFLAGS) -c src/overviewer.c
@@ -20,8 +18,16 @@ render.o: src/render.c src/render.h
 nbt.o: src/nbt.c src/nbt.h
 	$(CC) $(CFLAGS) -c src/nbt.c
 
+parson.o: parson/parson.c parson/parson.h
+	$(CC) $(CFLAGS) -c parson/parson.c
+
 clean:
 	rm $(BIN) *.o
 
 install:
 	git clone -b assets --single-branch https://github.com/samipourquoi/overviewer.git assets
+	git clone https://github.com/kgabis/parson.git
+
+uninstall:
+	rm -rf ./assets
+	rm -rf ./parson

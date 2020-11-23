@@ -2,6 +2,9 @@
 overviewer
 assets/
 
+# Libs
+parson/
+
 # Debug
 chunk.nbt
 test.nbt

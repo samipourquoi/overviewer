@@ -1,7 +1,14 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "render.h"
+#include "../parson/parson.h"
+
+char* get_block_path(char* name);
+void draw_model_cube_all(cairo_t* cr, JSON_Object* textures);
+void draw_block(cairo_t* cr, char* name);
+cairo_surface_t* render_block(char* name, direction_t direction);
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction);
 
 char* get_block_path(char* name) {
 	char* dir = "assets/textures/"; // length: 16
@@ -15,7 +22,67 @@ char* get_block_path(char* name) {
 	return path;
 }
 
-cairo_surface_t* render_block(cairo_t* cr, char* name, direction_t direction) {
+void draw_model_cube_all(cairo_t* cr, JSON_Object* textures) {
+	char texture_name[50];
+	const char* texture = json_object_get_string(textures, "all");
+	memcpy(texture_name, &texture[16], 50);
+	draw_texture(cr, texture_name, 0, 0, LEFT | RIGHT | TOP);
+}
+
+void draw_block(cairo_t* cr, char* name) {
+	char model_name[50];
+	{
+		// "assets/blockstates/": 19
+		// ".json": 5
+		// NULL terminating character: 1
+		char* blockstate_path = malloc(19 + strlen(name) + 5 + 1);
+		strcpy(blockstate_path, "assets/blockstates/");
+		strcat(blockstate_path, name);
+		strcat(blockstate_path, ".json");
+
+		JSON_Value* blockstate = json_parse_file(blockstate_path);
+		JSON_Object* root = json_value_get_object(blockstate);
+		JSON_Object* variants = json_object_get_object(root, "variants");
+		JSON_Value* variant_value = json_object_get_value_at(variants, 0);
+
+		// It can either be an object (=one variant), or an
+		// array of variants.
+		JSON_Object* variant;
+		if (json_type(variant_value) == JSONObject) {
+			variant = json_value_get_object(variant_value);
+		} else {
+			variant = json_array_get_object(json_value_get_array(variant_value), 0);
+		}
+		char* model_id = json_object_get_string(variant, "model");
+		memcpy(model_name, &model_id[16], 50);
+
+		json_value_free(blockstate);
+		free(blockstate_path);
+	}
+
+	{
+		// "assets/models/block/": 21
+		// ".json": 5
+		// NULL terminating character: 1
+		char* model_path = malloc(20 + strlen(name) + 5 + 1);
+		strcpy(model_path, "assets/models/block/");
+		strcat(model_path, model_name);
+		strcat(model_path, ".json");
+
+		JSON_Value* model = json_parse_file(model_path);
+		JSON_Object* root = json_value_get_object(model);
+		JSON_Object* textures = json_object_get_object(root, "textures");
+		char* parent = json_object_get_string(root, "parent");
+		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
+			draw_model_cube_all(cr, textures);
+		}
+
+		free(model_path);
+		json_value_free(model);
+	}
+}
+
+cairo_surface_t* render_block(char* name, direction_t direction) {
 	char* path = get_block_path(name);
 	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
 	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
@@ -54,20 +121,20 @@ cairo_surface_t* render_block(cairo_t* cr, char* name, direction_t direction) {
 	return iso;
 }
 
-void draw_block(cairo_t* cr, char* name, int x, int y, unsigned char direction) {
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction) {
 	cairo_surface_t* surface = NULL;
 	if (direction & 0b100) {
-		surface = render_block(cr, name, TOP);
+		surface = render_block(name, TOP);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
 	if (direction & 0b010) {
-		surface = render_block(cr, name, LEFT);
+		surface = render_block(name, LEFT);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
 	if (direction & 0b001) {
-		surface = render_block(cr, name, RIGHT);
+		surface = render_block(name, RIGHT);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 	}
@@ -80,7 +147,7 @@ int render() {
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 100, 100);
 	cr = cairo_create(surface);
 
-	draw_block(cr, "white_wool", 0, 0, LEFT | RIGHT | TOP);
+	draw_block(cr, "diamond_block");
 
 	cairo_surface_write_to_png(surface, "render.png");
 
