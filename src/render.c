@@ -4,8 +4,15 @@
 #include "render.h"
 #include "../parson/parson.h"
 
+#define TILE_HEIGHT 32
+#define TILE_WIDTH 28
+#define TILE_TOP_HEIGHT 16
+#define CHUNK_HEIGHT 64
+#define IMAGE_HEIGHT (TILE_HEIGHT*CHUNK_HEIGHT + 168)
+#define IMAGE_WIDTH (TILE_WIDTH*16)
+
 char* get_block_path(char* name);
-void draw_block(cairo_t* cr, char* name, int x, int y);
+void draw_block(cairo_t* cr, char* name, int x, int y, int z);
 cairo_surface_t* render_block(char* name, direction_t direction);
 void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction);
 
@@ -67,17 +74,23 @@ void draw_model_cube_column(DRAW_ARGS) {
 	draw_texture(cr, texture_name, x, y, LEFT | RIGHT);
 }
 
-void pos_to_iso(int* x, int* y) {
-	*x *= 14;
-	*y *= 14;
-	double new_x = *x + *y;
-	double new_y = -.5 * (double)(*x) + .5 * (double)(*y);
-	*x = (int)(new_x);
-	*y = (int)(new_y);
+void pos_to_iso(int x, int y, int z, int* screen_x, int* screen_y) {
+	// Makes z=0 start at the top instead of at the bottom.
+	z = 15 - z;
+
+	// Don't ask me why 3.48 works, it just does.
+	*screen_x = TILE_WIDTH/2 * (x + z);
+	*screen_y = TILE_WIDTH/3.48 * (-z + x);
+
+	// Computes the Y offset to make y=0 go at the bottom.
+	// The -168 at the end is for letting the whole y=0 layer fit
+	// (it would be cropped otherwise).
+	*screen_y += IMAGE_HEIGHT - (y-1)*TILE_HEIGHT/2 - 168;
 }
 
-void draw_block(cairo_t* cr, char* name, int x, int y) {
-	pos_to_iso(&x, &y);
+void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
+	int screen_x, screen_y;
+	pos_to_iso(x, y, z, &screen_x, &screen_y);
 
 	char model_name[50];
 	{
@@ -123,14 +136,14 @@ void draw_block(cairo_t* cr, char* name, int x, int y) {
 		JSON_Object* textures = json_object_get_object(root, "textures");
 		char* parent = json_object_get_string(root, "parent");
 		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
-			draw_model_cube_all(cr, textures, x, y);
+			draw_model_cube_all(cr, textures, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube") == 0) {
-			draw_model_cube(cr, textures, x, y);
+			draw_model_cube(cr, textures, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube_column") == 0
 					|| strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
-			draw_model_cube_column(cr, textures, x, y);
+			draw_model_cube_column(cr, textures, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube_bottom_top") == 0) {
-			draw_model_cube_bottom_top(cr, textures, x, y);
+			draw_model_cube_bottom_top(cr, textures, screen_x, screen_y);
 		}
 
 		free(model_path);
@@ -150,8 +163,6 @@ cairo_surface_t* render_block(char* name, direction_t direction) {
 	cairo_matrix_t matrix;
 
 	#define COS_30 0.86602540378
-	#define WIDTH 28
-	#define TOP_HEIGHT 16
 	switch (direction) {
 	default:
 	case TOP:
@@ -160,19 +171,17 @@ cairo_surface_t* render_block(char* name, direction_t direction) {
 		matrix.yx = 0.5;     matrix.yy = 0.5;
 		break;
 	case LEFT:
-		matrix.x0 = 0;      matrix.y0 = TOP_HEIGHT/2;
+		matrix.x0 = 0;      matrix.y0 = TILE_TOP_HEIGHT/2;
 		matrix.xx = COS_30;   matrix.xy = 0;
 		matrix.yx = 0.5;     matrix.yy = 1;
 		break;
 	case RIGHT:
-		matrix.x0 = WIDTH/2;     matrix.y0 = TOP_HEIGHT;
+		matrix.x0 = TILE_WIDTH/2; matrix.y0 = TILE_TOP_HEIGHT;
 		matrix.xx = COS_30;   matrix.xy = 0;
 		matrix.yx = -0.5;    matrix.yy = 1;
 		break;
 	}
 	#undef COS_30
-	#undef WIDTH
-	#undef TOP_HEIGHT
 	cairo_transform(iso_cr, &matrix);
 	cairo_set_source_surface(iso_cr, block, 0, 0);
 	cairo_paint(iso_cr);
@@ -207,22 +216,11 @@ void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction
 int render() {
 	cairo_surface_t *surface;
 	cairo_t *cr;
-	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 100, 100);
+	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, IMAGE_WIDTH, IMAGE_HEIGHT);
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-
-	draw_block(cr, "crafting_table", 0, 0);
-	// draw_block(cr, "red_wool", -1, 1);
-	// draw_block(cr, "stone", 1, 2);
-	// draw_block(cr, "stone", 0, 2);
-	// draw_block(cr, "gold_ore", 1, 3);
-	// draw_block(cr, "stone", 0, 3);
-
-	// draw_block(cr, "lime_wool", 0, 1);
-	// draw_block(cr, "netherrack", 28, 0);
-	// draw_block(cr, "crafting_table", 13, 23);
-	// draw_block(cr, "target", 24, 24);
+	draw_block(cr, "diamond_block", 8, 0, 8);
 
 	cairo_surface_write_to_png(surface, "render.png");
 
