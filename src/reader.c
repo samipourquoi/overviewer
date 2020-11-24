@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <zlib.h>
 #include <math.h>
+#include <string.h>
 #include "reader.h"
 #include "nbt.h"
+#include "render.h"
 
 #define CHUNK_SIZE 4096
 #define DEBUG
@@ -121,7 +123,11 @@ unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length) {
 
 char* get_block_from_index(nbt_tag* palette, int index) {
 	compound_tag* block = palette->value->list_value->values[index]->value->compound_value;
-	return cmpd_get_from_name(block, "Name")->value->string_value;
+	char* name = cmpd_get_from_name(block, "Name")->value->string_value;
+	int shortened_length = (int)strlen(name) - 10 + 1;
+	char* shortened_name = malloc(shortened_length);
+	memcpy(shortened_name, &name[10], shortened_length);
+	return shortened_name;
 }
 
 compound_tag* parse_section(compound_tag* section, char* out[16][256][16], int* coords) {
@@ -146,7 +152,9 @@ compound_tag* parse_section(compound_tag* section, char* out[16][256][16], int* 
 
 				// The output array is ordered XYZ.
 				// They are stored in the region files as YZX however.
-				out[*coords & 0x000F][(*coords & 0xFF00) >> 8][(*coords & 0x00F0) >> 4] = get_block_from_index(palette, palette_index);
+				out [*coords & 0x000F]
+					[(*coords & 0xFF00) >> 8]
+					[(*coords & 0x00F0) >> 4] = get_block_from_index(palette, palette_index);
 				(*coords)++;
 			}
 		}
@@ -158,7 +166,7 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 	compound_tag* tree = nbt_parse_tree(data, length);
 	nbt_tag* sections = cmpd_get_from_path(tree, "Level.Sections");
 
-	char* blocks[16][256][16];
+	char* blocks[16][256][16] = { NULL };
 	int coords = 0x0000;
 
 	// There is an empty section at index 0,
@@ -166,8 +174,9 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 	for (int y = 1; y < sections->value->list_value->size; y++) {
 		nbt_tag* section = sections->value->list_value->values[y];
 		parse_section(section->value->compound_value, blocks, &coords);
-		printf("%s\n", blocks[0][0][0]);
 	}
+
+	render(blocks);
 
 	return NULL;
 }

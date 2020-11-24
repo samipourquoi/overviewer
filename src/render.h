@@ -9,6 +9,6 @@ typedef enum {
 	RIGHT   = 0b001
 } direction_t;
 
-int render();
+int render(char* blocks[16][256][16]);
 
 #endif

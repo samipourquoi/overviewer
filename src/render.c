@@ -7,7 +7,7 @@
 #define TILE_HEIGHT 32
 #define TILE_WIDTH 28
 #define TILE_TOP_HEIGHT 16
-#define CHUNK_HEIGHT 64
+#define CHUNK_HEIGHT 128
 #define IMAGE_HEIGHT (TILE_HEIGHT*CHUNK_HEIGHT + 168)
 #define IMAGE_WIDTH (TILE_WIDTH*16)
 
@@ -135,6 +135,8 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
 		JSON_Object* root = json_value_get_object(model);
 		JSON_Object* textures = json_object_get_object(root, "textures");
 		char* parent = json_object_get_string(root, "parent");
+		if (parent == NULL) return;
+
 		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
 			draw_model_cube_all(cr, textures, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube") == 0) {
@@ -213,14 +215,23 @@ void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction
 	cairo_surface_destroy(surface);
 }
 
-int render() {
+int render(char* blocks[16][256][16]) {
 	cairo_surface_t *surface;
 	cairo_t *cr;
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, IMAGE_WIDTH, IMAGE_HEIGHT);
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-	draw_block(cr, "diamond_block", 8, 0, 8);
+	for (int x = 0; x < 16; x++) {
+		for (int y = 0; y < CHUNK_HEIGHT; y++) {
+			for (int z = 0; z < 16; z++) {
+				char* block = blocks[x][y][z];
+				if (block == NULL) continue;
+				draw_block(cr, block, x, y, z);
+				free(blocks[x][y][z]);
+			}
+		}
+	}
 
 	cairo_surface_write_to_png(surface, "render.png");
 
