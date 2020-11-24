@@ -144,30 +144,35 @@ cairo_surface_t* render_block(char* name, direction_t direction) {
 	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
 	cairo_t* iso_cr = cairo_create(iso);
 
-	#define COS_30 0.86602540378
-
 	// Transformation matrices that apply a scaling
 	// and a shearing. It also applies a rotation for the TOP side.
 	// Go look at: http://jeroenhoek.nl/articles/svg-and-isometric-projection.html
 	cairo_matrix_t matrix;
+
+	#define COS_30 0.86602540378
+	#define WIDTH 28
+	#define TOP_HEIGHT 16
 	switch (direction) {
 	default:
 	case TOP:
-		matrix.x0 = 15;     matrix.y0 = 0;
-		matrix.xx = COS_30;   matrix.xy = -.933;
-		matrix.yx = .5;     matrix.yy = .461;
+		matrix.x0 = 14;     matrix.y0 = 0;
+		matrix.xx = COS_30;   matrix.xy = -COS_30;
+		matrix.yx = 0.5;     matrix.yy = 0.5;
 		break;
 	case LEFT:
-		matrix.x0 = 0;      matrix.y0 = 7;
-		matrix.xx = .866;   matrix.xy = 0;
-		matrix.yx = .5;     matrix.yy = 1;
+		matrix.x0 = 0;      matrix.y0 = TOP_HEIGHT/2;
+		matrix.xx = COS_30;   matrix.xy = 0;
+		matrix.yx = 0.5;     matrix.yy = 1;
 		break;
 	case RIGHT:
-		matrix.x0 = 14;     matrix.y0 = 15;
-		matrix.xx = .866;   matrix.xy = 0;
-		matrix.yx = -.5;    matrix.yy = 1;
+		matrix.x0 = WIDTH/2;     matrix.y0 = TOP_HEIGHT;
+		matrix.xx = COS_30;   matrix.xy = 0;
+		matrix.yx = -0.5;    matrix.yy = 1;
 		break;
 	}
+	#undef COS_30
+	#undef WIDTH
+	#undef TOP_HEIGHT
 	cairo_transform(iso_cr, &matrix);
 	cairo_set_source_surface(iso_cr, block, 0, 0);
 	cairo_paint(iso_cr);
