@@ -26,15 +26,11 @@ int read_region_file(char* path, int chunkX, int chunkZ) {
 	unsigned char location_header[4];
 	fseek(region, offset_location, SEEK_SET);
 	fread(location_header, sizeof(location_header), 1, region);
-	for (int i = 0; i < sizeof(location_header); i++) printf("%x ", location_header[i]);
-	printf("\noffset: %d\n\n", offset_location);
 
 	int offset_chunk = (65536*location_header[0] + 256*location_header[1] + 1*location_header[2]) * 4096;
 	unsigned char chunk_header[5];
 	fseek(region, offset_chunk, SEEK_SET);
 	fread(chunk_header, sizeof(chunk_header), 1, region);
-	for (int i = 0; i < sizeof(chunk_header); i++) printf("%x ", chunk_header[i]);
-	printf("\nchunk: %x\n\n", offset_chunk);
 
 	int final_length;
 	int data_length = 16777216*chunk_header[0] + 65536*chunk_header[1] + 256*chunk_header[2] + 1*chunk_header[3]-1;
