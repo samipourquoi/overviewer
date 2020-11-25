@@ -4,9 +4,9 @@
 #include <cairo/cairo.h>
 
 typedef enum {
-	TOP     = 0b100,
-	LEFT    = 0b010,
-	RIGHT   = 0b001
+	TOP     = 1<<0,
+	LEFT    = 1<<1,
+	RIGHT   = 1<<2
 } direction_t;
 
 int render(char* blocks[16][256][16]);

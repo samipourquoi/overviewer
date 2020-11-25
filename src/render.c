@@ -13,20 +13,12 @@
 
 char* get_block_path(char* name);
 void draw_block(cairo_t* cr, char* name, int x, int y, int z);
-cairo_surface_t* render_block(char* name, direction_t direction);
-void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction);
+cairo_surface_t* render_side(char* name, direction_t direction);
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides);
 
-char* get_block_path(char* name) {
-	char* dir = "assets/textures/"; // length: 16
-	char* extension = ".png"; // length: 4
-	char* path = malloc(16 + 4 + strlen(name) + 1);
-
-	strcpy(path, dir);
-	strcat(path, name);
-	strcat(path, extension);
-
-	return path;
-}
+///=================================///
+///		MODELS IMPLEMENTATION		///
+///=================================///
 
 #define DRAW_ARGS cairo_t* cr, JSON_Object* textures, int x, int y
 
@@ -74,7 +66,26 @@ void draw_model_cube_column(DRAW_ARGS) {
 	draw_texture(cr, texture_name, x, y, LEFT | RIGHT);
 }
 
-void pos_to_iso(int x, int y, int z, int* screen_x, int* screen_y) {
+#undef DRAW_ARGS
+
+///=================================///
+///		RENDER & TILING FUNCTIONS	///
+///=================================///
+
+
+/**
+ * Convert a coordinate in the map to screen
+ * coordinates. Puts the resulting X and Y coordinates
+ * into the pointers `screen_x` and `screen_y`.
+ *
+ * @details
+ * (0; 0; 0) is at the back.
+ * (15; 0; 0) is on the left.
+ * (0; 0; 15) is on the right
+ * (15; 0; 15) is at the front.
+ * The Y value can vary from 0 to `CHUNK_HEIGHT`.
+ */
+void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y) {
 	// Makes z=0 start at the top instead of at the bottom.
 	z = 15 - z;
 
@@ -88,9 +99,33 @@ void pos_to_iso(int x, int y, int z, int* screen_x, int* screen_y) {
 	*screen_y += IMAGE_HEIGHT - (y-1)*TILE_HEIGHT/2 - 168;
 }
 
+/**
+ * Returns the path to the given texture name.
+ *
+ * @warning
+ * Don't forget to free() the returned string!
+ */
+char* get_block_path(char* name) {
+	char* dir = "assets/textures/"; // length: 16
+	char* extension = ".png"; // length: 4
+	char* path = malloc(16 + 4 + strlen(name) + 1);
+
+	strcpy(path, dir);
+	strcat(path, name);
+	strcat(path, extension);
+
+	return path;
+}
+
+/**
+ * Draws a given block id to a specific coordinate on
+ * the map.
+ *
+ * 	@see map_to_screen()
+ */
 void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
 	int screen_x, screen_y;
-	pos_to_iso(x, y, z, &screen_x, &screen_y);
+	map_to_screen(x, y, z, &screen_x, &screen_y);
 
 	char model_name[50];
 	{
@@ -153,7 +188,36 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
 	}
 }
 
-cairo_surface_t* render_block(char* name, direction_t direction) {
+/**
+ * Draw a texture on given sides, at a given screen coordinate.
+ */
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides) {
+	cairo_surface_t* surface = NULL;
+	if (sides & TOP) {
+		surface = render_side(name, TOP);
+		cairo_set_source_surface(cr, surface, x, y);
+		cairo_paint(cr);
+		cairo_surface_destroy(surface);
+	}
+	if (sides & LEFT) {
+		surface = render_side(name, LEFT);
+		cairo_set_source_surface(cr, surface, x, y);
+		cairo_paint(cr);
+		cairo_surface_destroy(surface);
+	}
+	if (sides & RIGHT) {
+		surface = render_side(name, RIGHT);
+		cairo_set_source_surface(cr, surface, x, y);
+		cairo_paint(cr);
+		cairo_surface_destroy(surface);
+	}
+}
+
+/**
+ * Generate a Cairo surface of an isometric side
+ * of a texture name.
+ */
+cairo_surface_t* render_side(char* name, direction_t direction) {
 	char* path = get_block_path(name);
 	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
 	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
@@ -195,26 +259,10 @@ cairo_surface_t* render_block(char* name, direction_t direction) {
 	return iso;
 }
 
-void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char direction) {
-	cairo_surface_t* surface = NULL;
-	if (direction & 0b100) {
-		surface = render_block(name, TOP);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-	}
-	if (direction & 0b010) {
-		surface = render_block(name, LEFT);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-	}
-	if (direction & 0b001) {
-		surface = render_block(name, RIGHT);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-	}
-	cairo_surface_destroy(surface);
-}
-
+/**
+ * Entrypoint of the rendering process.
+ * Renders to an isometric view the given chunk content.
+ */
 int render(char* blocks[16][256][16]) {
 	cairo_surface_t *surface;
 	cairo_t *cr;
