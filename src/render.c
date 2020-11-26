@@ -7,9 +7,11 @@
 #define TILE_HEIGHT 32
 #define TILE_WIDTH 28
 #define TILE_TOP_HEIGHT 16
-#define CHUNK_HEIGHT 128
+#define CHUNK_HEIGHT 82
 #define IMAGE_HEIGHT (TILE_HEIGHT*CHUNK_HEIGHT + 168)
 #define IMAGE_WIDTH (TILE_WIDTH*16)
+#define IS_AIR(BLOCK) ((int)strcmp(BLOCK, "air") == 0 || (int)strcmp(BLOCK, "cave_air") == 0)
+#define MIN(V1, V2) (V1 < V2 ? V2 : V1)
 
 char* get_block_path(char* name);
 void draw_block(cairo_t* cr, char* name, int x, int y, int z);
@@ -80,8 +82,8 @@ void draw_model_cube_column(DRAW_ARGS) {
  *
  * @details
  * (0; 0; 0) is at the back.
- * (15; 0; 0) is on the left.
- * (0; 0; 15) is on the right
+ * (0; 0; 15) is on the left.
+ * (15; 0; 0) is on the right.
  * (15; 0; 15) is at the front.
  * The Y value can vary from 0 to `CHUNK_HEIGHT`.
  */
@@ -270,22 +272,20 @@ int render(chunk_t* chunk) {
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-	// for (int x = 0; x < 16; x++) {
-	// 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
-	// 		for (int z = 0; z < 16; z++) {
-	// 			char* block = blocks[x][y][z];
-	// 			if (block == NULL) continue;
-	// 			draw_block(cr, block, x, y, z);
-	// 			free(blocks[x][y][z]);
-	// 		}
-	// 	}
-	// }
-
-	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
+	int times = 0;
+	for (pos_t pos = 0; pos < 0x80FF; pos++) {
 		char* block = chunk->blocks[pos];
 		if (block == NULL) continue;
+		if (POS_GET_X(pos) != 15 && POS_GET_Z(pos) != 15 && POS_GET_Y(pos) != 255) {
+			char* next_block = chunk->blocks[POS_ADD_X(POS_ADD_Y(POS_ADD_Z(pos)))];
+			if (next_block == NULL) continue;
+			if (!IS_AIR(next_block)) continue;
+		}
 		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos));
+		times++;
 	}
+
+	printf("blocks rendered: %d\n", times);
 
 	cairo_surface_write_to_png(surface, "render.png");
 

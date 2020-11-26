@@ -158,7 +158,7 @@ void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
 	int y = cmpd_get_from_name(section, "Y")->value->int_value * 16;
 	*coords = (*coords & (~(0xFF00))) | y << 8;
 
-	for (int x = 0; x < section->size; x++) {
+	// for (int x = 0; x < section->size; x++) {
 		nbt_tag* blockstates = cmpd_get_from_path(section, "BlockStates");
 		for (int i = 0; i < blockstates->value->array_length; i++) {
 			unsigned long line = blockstates->value->long_array_value[i];
@@ -172,7 +172,7 @@ void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
 				(*coords)++;
 			}
 		}
-	}
+	// }
 }
 
 compound_tag* parse_chunk(unsigned char* data, int length) {

@@ -11,9 +11,14 @@
 ///=================================///
 
 #define POS_MAX_VALUE 0xFFFF
+
 #define POS_GET_X(POS) ( ((POS) & 0x000F) )
 #define POS_GET_Y(POS) ( ((POS) & 0xFF00) >> 8 )
 #define POS_GET_Z(POS) ( ((POS) & 0x00F0) >> 4 )
+
+#define POS_ADD_X(POS) ( (POS) + 0x0001 )
+#define POS_ADD_Y(POS) ( (POS) + 0x0100 )
+#define POS_ADD_Z(POS) ( (POS) + 0x0010 )
 
 typedef struct {
 	char** blocks;
