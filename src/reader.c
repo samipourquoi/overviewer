@@ -7,8 +7,29 @@
 #include "nbt.h"
 #include "render.h"
 
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define CHUNK_SIZE 4096
 #define DEBUG
+
+///=================================///
+///			CHUNK DATA				///
+///=================================///
+
+chunk_t* chunk_init() {
+	chunk_t* chunk = malloc(sizeof(chunk_t));
+	// Uses `calloc` in case some sections are missing
+	chunk->blocks = calloc(16*16*256, sizeof(char*));
+	return chunk;
+}
+
+void chunk_free(chunk_t* chunk) {
+	free(chunk->blocks);
+	free(chunk);
+}
+
+///=================================///
+///			CHUNK READING			///
+///=================================///
 
 /**
  * Reads a chunk data in a given region file.
@@ -115,7 +136,6 @@ unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length) {
 	return uncompressed_data;
 }
 
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 char* get_block_from_index(nbt_tag* palette, int index) {
 	compound_tag* block = palette->value->list_value->values[index]->value->compound_value;
@@ -126,9 +146,9 @@ char* get_block_from_index(nbt_tag* palette, int index) {
 	return shortened_name;
 }
 
-compound_tag* parse_section(compound_tag* section, char* out[16][256][16], int* coords) {
+void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
 	nbt_tag* palette = cmpd_get_from_name(section, "Palette");
-	if (palette == NULL) return NULL;
+	if (palette == NULL) return;
 	unsigned int block_length = ceil(log2(palette->value->list_value->size));
 	block_length = MAX(block_length, 4);
 	unsigned int per_line = floor(64.0 / block_length);
@@ -148,9 +168,7 @@ compound_tag* parse_section(compound_tag* section, char* out[16][256][16], int* 
 
 				// The output array is ordered XYZ.
 				// They are stored in the region files as YZX however.
-				out [*coords & 0x000F]
-					[(*coords & 0xFF00) >> 8]
-					[(*coords & 0x00F0) >> 4] = get_block_from_index(palette, palette_index);
+				chunk->blocks[*coords] = get_block_from_index(palette, palette_index);
 				(*coords)++;
 			}
 		}
@@ -162,17 +180,18 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 	compound_tag* tree = nbt_parse_tree(data, length);
 	nbt_tag* sections = cmpd_get_from_path(tree, "Level.Sections");
 
-	char* blocks[16][256][16] = { NULL };
-	int coords = 0x0000;
+	chunk_t* chunk = chunk_init();
+	pos_t coords = 0x0000;
 
 	// There is an empty section at index 0,
 	// so we start at index 1.
 	for (int y = 1; y < sections->value->list_value->size; y++) {
 		nbt_tag* section = sections->value->list_value->values[y];
-		parse_section(section->value->compound_value, blocks, &coords);
+		parse_section(section->value->compound_value, chunk, &coords);
 	}
 
-	render(blocks);
+	render(chunk);
 
+	chunk_free(chunk);
 	return NULL;
 }

@@ -3,6 +3,8 @@ CFLAGS = -Wfatal-errors -g
 BIN = overviewer
 LIB = -lz -lcairo
 
+all: $(BIN)
+
 $(BIN): overviewer.o reader.o render.o nbt.o parson.o
 	$(CC) $(CFLAGS) $(LIB) *.o -o $(BIN)
 
@@ -22,7 +24,7 @@ parson.o: parson/parson.c parson/parson.h
 	$(CC) $(CFLAGS) -c parson/parson.c
 
 clean:
-	rm $(BIN) *.o
+	rm -f $(BIN) *.o
 
 install:
 	git clone -b assets --single-branch https://github.com/samipourquoi/overviewer.git assets

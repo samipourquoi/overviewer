@@ -263,22 +263,28 @@ cairo_surface_t* render_side(char* name, direction_t direction) {
  * Entrypoint of the rendering process.
  * Renders to an isometric view the given chunk content.
  */
-int render(char* blocks[16][256][16]) {
+int render(chunk_t* chunk) {
 	cairo_surface_t *surface;
 	cairo_t *cr;
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, IMAGE_WIDTH, IMAGE_HEIGHT);
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-	for (int x = 0; x < 16; x++) {
-		for (int y = 0; y < CHUNK_HEIGHT; y++) {
-			for (int z = 0; z < 16; z++) {
-				char* block = blocks[x][y][z];
-				if (block == NULL) continue;
-				draw_block(cr, block, x, y, z);
-				free(blocks[x][y][z]);
-			}
-		}
+	// for (int x = 0; x < 16; x++) {
+	// 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
+	// 		for (int z = 0; z < 16; z++) {
+	// 			char* block = blocks[x][y][z];
+	// 			if (block == NULL) continue;
+	// 			draw_block(cr, block, x, y, z);
+	// 			free(blocks[x][y][z]);
+	// 		}
+	// 	}
+	// }
+
+	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
+		char* block = chunk->blocks[pos];
+		if (block == NULL) continue;
+		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos));
 	}
 
 	cairo_surface_write_to_png(surface, "render.png");

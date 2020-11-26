@@ -2,6 +2,7 @@
 #define OVERVIEWER_RENDER_H
 
 #include <cairo/cairo.h>
+#include "reader.h"
 
 typedef enum {
 	TOP     = 1<<0,
@@ -9,6 +10,6 @@ typedef enum {
 	RIGHT   = 1<<2
 } direction_t;
 
-int render(char* blocks[16][256][16]);
+int render(chunk_t* chunk);
 
 #endif
