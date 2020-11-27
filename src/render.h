@@ -2,7 +2,7 @@
 #define OVERVIEWER_RENDER_H
 
 #include <cairo/cairo.h>
-#include "reader.h"
+#include "parse.h"
 
 typedef enum {
 	TOP     = 1<<0,

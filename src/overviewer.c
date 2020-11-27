@@ -1,5 +1,5 @@
 #include "overviewer.h"
-#include "reader.h"
+#include "parse.h"
 #include "render.h"
 
 int main(void) {

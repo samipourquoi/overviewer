@@ -1,5 +1,5 @@
-#ifndef OVERVIEWER_READER_H
-#define OVERVIEWER_READER_H
+#ifndef OVERVIEWER_PARSE_H
+#define OVERVIEWER_PARSE_H
 #include <png.h>
 
 #include <stdio.h>

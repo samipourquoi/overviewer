@@ -3,7 +3,7 @@
 #include <zlib.h>
 #include <math.h>
 #include <string.h>
-#include "reader.h"
+#include "parse.h"
 #include "nbt.h"
 #include "render.h"
 
