@@ -13,23 +13,25 @@
 #define IS_AIR(BLOCK) ((int)strcmp(BLOCK, "air") == 0 || (int)strcmp(BLOCK, "cave_air") == 0)
 #define MIN(V1, V2) (V1 < V2 ? V2 : V1)
 
+void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
 char* get_block_path(char* name);
-void draw_block(cairo_t* cr, char* name, int x, int y, int z);
-cairo_surface_t* render_side(char* name, direction_t direction);
+void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char sides);
 void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides);
+cairo_surface_t* render_side(char* name, direction_t direction);
+int render(chunk_t* chunk);
 
 ///=================================///
 ///		MODELS IMPLEMENTATION		///
 ///=================================///
 
-#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, int x, int y
+#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char direction, int x, int y
 
 void draw_model_cube_all(DRAW_ARGS) {
 	char texture_name[50];
 	const char* texture = json_object_get_string(textures, "all");
 
 	memcpy(texture_name, &texture[16], 50);
-	draw_texture(cr, texture_name, x, y, LEFT | RIGHT | TOP);
+	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT | TOP));
 }
 
 void draw_model_cube(DRAW_ARGS) {
@@ -39,11 +41,11 @@ void draw_model_cube(DRAW_ARGS) {
 	const char* east = json_object_get_string(textures, "east");
 
 	memcpy(texture_name, &top[16], 50);
-	draw_texture(cr, texture_name, x, y, TOP);
+	draw_texture(cr, texture_name, x, y, direction & TOP);
 	memcpy(texture_name, &south[16], 50);
-	draw_texture(cr, texture_name, x, y, LEFT);
+	draw_texture(cr, texture_name, x, y, direction & LEFT);
 	memcpy(texture_name, &east[16], 50);
-	draw_texture(cr, texture_name, x, y, RIGHT);
+	draw_texture(cr, texture_name, x, y, direction & RIGHT);
 }
 
 void draw_model_cube_bottom_top(DRAW_ARGS) {
@@ -52,9 +54,9 @@ void draw_model_cube_bottom_top(DRAW_ARGS) {
 	const char* side = json_object_get_string(textures, "side");
 
 	memcpy(texture_name, &top[16], 50);
-	draw_texture(cr, texture_name, x, y, TOP);
+	draw_texture(cr, texture_name, x, y, direction & TOP);
 	memcpy(texture_name, &side[16], 50);
-	draw_texture(cr, texture_name, x, y, LEFT | RIGHT);
+	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT));
 }
 
 void draw_model_cube_column(DRAW_ARGS) {
@@ -63,9 +65,9 @@ void draw_model_cube_column(DRAW_ARGS) {
 	const char* side = json_object_get_string(textures, "side");
 
 	memcpy(texture_name, &end[16], 50);
-	draw_texture(cr, texture_name, x, y, TOP);
+	draw_texture(cr, texture_name, x, y, direction & TOP);
 	memcpy(texture_name, &side[16], 50);
-	draw_texture(cr, texture_name, x, y, LEFT | RIGHT);
+	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT));
 }
 
 #undef DRAW_ARGS
@@ -125,7 +127,7 @@ char* get_block_path(char* name) {
  *
  * 	@see map_to_screen()
  */
-void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
+void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char sides) {
 	int screen_x, screen_y;
 	map_to_screen(x, y, z, &screen_x, &screen_y);
 
@@ -175,14 +177,14 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z) {
 		if (parent == NULL) return;
 
 		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
-			draw_model_cube_all(cr, textures, screen_x, screen_y);
+			draw_model_cube_all(cr, textures, sides, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube") == 0) {
-			draw_model_cube(cr, textures, screen_x, screen_y);
+			draw_model_cube(cr, textures, sides, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube_column") == 0
 					|| strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
-			draw_model_cube_column(cr, textures, screen_x, screen_y);
+			draw_model_cube_column(cr, textures, sides, screen_x, screen_y);
 		} else if (strcmp(parent, "minecraft:block/cube_bottom_top") == 0) {
-			draw_model_cube_bottom_top(cr, textures, screen_x, screen_y);
+			draw_model_cube_bottom_top(cr, textures, sides, screen_x, screen_y);
 		}
 
 		free(model_path);
@@ -272,20 +274,27 @@ int render(chunk_t* chunk) {
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-	int times = 0;
 	for (pos_t pos = 0; pos < 0x80FF; pos++) {
 		char* block = chunk->blocks[pos];
 		if (block == NULL) continue;
-		if (POS_GET_X(pos) != 15 && POS_GET_Z(pos) != 15 && POS_GET_Y(pos) != 255) {
-			char* next_block = chunk->blocks[POS_ADD_X(POS_ADD_Y(POS_ADD_Z(pos)))];
-			if (next_block == NULL) continue;
-			if (!IS_AIR(next_block)) continue;
+		unsigned char sides = 0;
+		if (POS_GET_Y(pos) == 255 || POS_GET_Z(pos) == 15 || POS_GET_X(pos) == 15) {
+			sides = TOP | LEFT | RIGHT;
+			goto render_phase;
 		}
-		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos));
-		times++;
-	}
+		char* top_block = chunk->blocks[POS_ADD_Y(pos)];
+		char* left_block = chunk->blocks[POS_ADD_Z(pos)];
+		char* right_block = chunk->blocks[POS_ADD_X(pos)];
 
-	printf("blocks rendered: %d\n", times);
+		if (top_block != NULL && IS_AIR(top_block)) sides |= TOP;
+		if (right_block != NULL && IS_AIR(right_block)) sides |= RIGHT;
+		if (left_block != NULL && IS_AIR(left_block)) sides |= LEFT;
+
+		if (sides == 0) continue;
+
+render_phase:
+		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
+	}
 
 	cairo_surface_write_to_png(surface, "render.png");
 
