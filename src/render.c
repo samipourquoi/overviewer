@@ -255,21 +255,17 @@ int render(chunk_t* chunk) {
 		char* block = chunk->blocks[pos];
 		if (block == NULL) continue;
 		unsigned char sides = 0;
-		if (POS_GET_Y(pos) == 255 || POS_GET_Z(pos) == 15 || POS_GET_X(pos) == 15) {
-			sides = TOP | LEFT | RIGHT;
-			goto render_phase;
-		}
+
 		char* top_block = chunk->blocks[POS_ADD_Y(pos)];
 		char* left_block = chunk->blocks[POS_ADD_Z(pos)];
 		char* right_block = chunk->blocks[POS_ADD_X(pos)];
 
-		if (top_block != NULL && IS_AIR(top_block)) sides |= TOP;
-		if (right_block != NULL && IS_AIR(right_block)) sides |= RIGHT;
-		if (left_block != NULL && IS_AIR(left_block)) sides |= LEFT;
+		if (POS_GET_Y(pos) == 255 || (top_block   != NULL && IS_AIR(top_block)))   sides |= TOP;
+		if (POS_GET_Z(pos) == 15  || (left_block  != NULL && IS_AIR(left_block)))  sides |= LEFT;
+		if (POS_GET_X(pos) == 15  || (right_block != NULL && IS_AIR(right_block))) sides |= RIGHT;
 
 		if (sides == 0) continue;
 
-render_phase:
 		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
 	}
 
