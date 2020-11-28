@@ -24,53 +24,40 @@ int render(chunk_t* chunk);
 ///		MODELS IMPLEMENTATION		///
 ///=================================///
 
-#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char direction, int x, int y
-
-void draw_model_cube_all(DRAW_ARGS) {
-	char texture_name[50];
-	const char* texture = json_object_get_string(textures, "all");
-
-	memcpy(texture_name, &texture[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT | TOP));
+#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y
+#define DRAW_EASY(NAME, SIDES) { \
+    char texture_name[50]; \
+	const char* texture = (const char*)json_object_get_string(textures, NAME); \
+	memcpy(texture_name, &texture[16], 50); \
+	draw_texture(cr, texture_name, screen_x, screen_y, sides & (SIDES) ); \
 }
 
-void draw_model_cube(DRAW_ARGS) {
-	char texture_name[50];
-	char* top = json_object_get_string(textures, "up");
-	const char* south = json_object_get_string(textures, "south");
-	const char* east = json_object_get_string(textures, "east");
+void draw_model(DRAW_ARGS, int z, char* parent) {
+	int screen_x, screen_y;
+	map_to_screen(x, y, z, &screen_x, &screen_y);
 
-	memcpy(texture_name, &top[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & TOP);
-	memcpy(texture_name, &south[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & LEFT);
-	memcpy(texture_name, &east[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & RIGHT);
-}
+	if (strcmp(parent, "minecraft:block/cube_all") == 0) {
 
-void draw_model_cube_bottom_top(DRAW_ARGS) {
-	char texture_name[50];
-	char* top = json_object_get_string(textures, "top");
-	const char* side = json_object_get_string(textures, "side");
+		DRAW_EASY("all", LEFT | RIGHT | TOP);
+	} else if (strcmp(parent, "minecraft:block/cube") == 0) {
 
-	memcpy(texture_name, &top[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & TOP);
-	memcpy(texture_name, &side[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT));
-}
+		DRAW_EASY("up", TOP);
+		DRAW_EASY("south", LEFT);
+		DRAW_EASY("east", RIGHT);
+	} else if (strcmp(parent, "minecraft:block/cube_column") == 0
+	           || strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
 
-void draw_model_cube_column(DRAW_ARGS) {
-	char texture_name[50];
-	char* end = json_object_get_string(textures, "end");
-	const char* side = json_object_get_string(textures, "side");
+		DRAW_EASY("end", TOP);
+		DRAW_EASY("side", LEFT | RIGHT);
+	} else if (strcmp(parent, "minecraft:block/cube_bottom_top") == 0) {
 
-	memcpy(texture_name, &end[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & TOP);
-	memcpy(texture_name, &side[16], 50);
-	draw_texture(cr, texture_name, x, y, direction & (LEFT | RIGHT));
-}
+		DRAW_EASY("top", TOP);
+		DRAW_EASY("side", LEFT | RIGHT);
+	}
+};
 
 #undef DRAW_ARGS
+#undef DRAW_EASY
 
 ///=================================///
 ///		RENDER & TILING FUNCTIONS	///
@@ -128,8 +115,7 @@ char* get_block_path(char* name) {
  * 	@see map_to_screen()
  */
 void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char sides) {
-	int screen_x, screen_y;
-	map_to_screen(x, y, z, &screen_x, &screen_y);
+
 
 	char model_name[50];
 	{
@@ -154,7 +140,7 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char side
 		} else {
 			variant = json_array_get_object(json_value_get_array(variant_value), 0);
 		}
-		char* model_id = json_object_get_string(variant, "model");
+		char* model_id = (char*)json_object_get_string(variant, "model");
 		memcpy(model_name, &model_id[16], 50);
 
 		json_value_free(blockstate);
@@ -173,19 +159,10 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char side
 		JSON_Value* model = json_parse_file(model_path);
 		JSON_Object* root = json_value_get_object(model);
 		JSON_Object* textures = json_object_get_object(root, "textures");
-		char* parent = json_object_get_string(root, "parent");
+		char* parent = (char*)json_object_get_string(root, "parent");
 		if (parent == NULL) return;
 
-		if (strcmp(parent, "minecraft:block/cube_all") == 0) {
-			draw_model_cube_all(cr, textures, sides, screen_x, screen_y);
-		} else if (strcmp(parent, "minecraft:block/cube") == 0) {
-			draw_model_cube(cr, textures, sides, screen_x, screen_y);
-		} else if (strcmp(parent, "minecraft:block/cube_column") == 0
-					|| strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
-			draw_model_cube_column(cr, textures, sides, screen_x, screen_y);
-		} else if (strcmp(parent, "minecraft:block/cube_bottom_top") == 0) {
-			draw_model_cube_bottom_top(cr, textures, sides, screen_x, screen_y);
-		}
+		draw_model(cr, textures, sides, x, y, z, parent);
 
 		free(model_path);
 		json_value_free(model);

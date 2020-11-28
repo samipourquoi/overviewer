@@ -6,10 +6,9 @@ assets/
 parson/
 
 # Debug
-chunk.nbt
-test.nbt
+*.nbt
+*.png
 overviewer.dSYM
-original.png
 
 # IDEs
 .vscode
