@@ -21,7 +21,7 @@ cairo_surface_t* render_side(char* name, direction_t direction);
 int render(chunk_t* chunk);
 
 ///=================================///
-///		MODELS IMPLEMENTATION		///
+///       MODELS IMPLEMENTATION     ///
 ///=================================///
 
 #define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y
@@ -60,7 +60,7 @@ void draw_model(DRAW_ARGS, int z, char* parent) {
 #undef DRAW_EASY
 
 ///=================================///
-///		RENDER & TILING FUNCTIONS	///
+///    RENDER & TILING FUNCTIONS    ///
 ///=================================///
 
 

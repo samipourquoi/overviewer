@@ -7,7 +7,7 @@
 
 
 ///=================================///
-///			CHUNK DATA				///
+///            CHUNK DATA           ///
 ///=================================///
 
 #define POS_MAX_VALUE 0xFFFF
@@ -47,7 +47,7 @@ chunk_t* chunk_init();
 void chunk_free(chunk_t* chunk);
 
 ///=================================///
-///			CHUNK READING			///
+///           CHUNK READING         ///
 ///=================================///
 
 compound_tag* parse_chunk(unsigned char* data, int length);
