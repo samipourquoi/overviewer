@@ -16,23 +16,37 @@
 void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
 char* get_block_path(char* name);
 void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char sides);
-void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides);
-cairo_surface_t* render_side(char* name, direction_t direction);
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides, int tint);
+cairo_surface_t* render_side(char* name, direction_t direction, int tint);
 int render(chunk_t* chunk);
 
 ///=================================///
 ///       MODELS IMPLEMENTATION     ///
 ///=================================///
 
-#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y
-#define DRAW_EASY(NAME, SIDES) { \
-    char texture_name[50]; \
+#define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char sides, int screen_x, int screen_y
+#define DRAW_GET_NAME(NAME) \
+	char texture_name[50]; \
 	const char* texture = (const char*)json_object_get_string(textures, NAME); \
-	memcpy(texture_name, &texture[16], 50); \
-	draw_texture(cr, texture_name, screen_x, screen_y, sides & (SIDES) ); \
+	memcpy(texture_name, &texture[texture[9] == ':' /* minecraft: */ ? 16 : 6], 50);
+#define DRAW_EASY(NAME, SIDES) { \
+    DRAW_GET_NAME(NAME) \
+	draw_texture(cr, texture_name, screen_x, screen_y, sides & (SIDES), 0 ); \
 }
 
-void draw_model(DRAW_ARGS, int z, char* parent) {
+void draw_grass_block(DRAW_ARGS) {
+	DRAW_EASY("side", LEFT | RIGHT);
+	{
+		DRAW_GET_NAME("top");
+		draw_texture(cr, texture_name, screen_x, screen_y, sides & TOP, 0x55C93F);
+	}
+	{
+		DRAW_GET_NAME("overlay");
+		draw_texture(cr, texture_name, screen_x, screen_y, sides & (LEFT | RIGHT), 0x55C93F);
+	}
+}
+
+void draw_model(cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y, int z, char* parent) {
 	int screen_x, screen_y;
 	map_to_screen(x, y, z, &screen_x, &screen_y);
 
@@ -44,8 +58,8 @@ void draw_model(DRAW_ARGS, int z, char* parent) {
 		DRAW_EASY("up", TOP);
 		DRAW_EASY("south", LEFT);
 		DRAW_EASY("east", RIGHT);
-	} else if (strcmp(parent, "minecraft:block/cube_column") == 0
-	           || strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
+	} else if (strcmp(parent, "minecraft:block/cube_column") == 0 ||
+	           strcmp(parent, "minecraft:block/cube_column_horizontal") == 0) {
 
 		DRAW_EASY("end", TOP);
 		DRAW_EASY("side", LEFT | RIGHT);
@@ -53,6 +67,9 @@ void draw_model(DRAW_ARGS, int z, char* parent) {
 
 		DRAW_EASY("top", TOP);
 		DRAW_EASY("side", LEFT | RIGHT);
+	} else if (strcmp(parent, "block/block") == 0) {
+
+		draw_grass_block(cr, textures, sides, screen_x, screen_y);
 	}
 };
 
@@ -172,22 +189,22 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char side
 /**
  * Draw a texture on given sides, at a given screen coordinate.
  */
-void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides) {
+void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides, int tint) {
 	cairo_surface_t* surface = NULL;
 	if (sides & TOP) {
-		surface = render_side(name, TOP);
+		surface = render_side(name, TOP, tint);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 		cairo_surface_destroy(surface);
 	}
 	if (sides & LEFT) {
-		surface = render_side(name, LEFT);
+		surface = render_side(name, LEFT, tint);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 		cairo_surface_destroy(surface);
 	}
 	if (sides & RIGHT) {
-		surface = render_side(name, RIGHT);
+		surface = render_side(name, RIGHT, tint);
 		cairo_set_source_surface(cr, surface, x, y);
 		cairo_paint(cr);
 		cairo_surface_destroy(surface);
@@ -198,11 +215,36 @@ void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides) {
  * Generate a Cairo surface of an isometric side
  * of a texture name.
  */
-cairo_surface_t* render_side(char* name, direction_t direction) {
+cairo_surface_t* render_side(char* name, direction_t direction, int tint) {
 	char* path = get_block_path(name);
 	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
 	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
 	cairo_t* iso_cr = cairo_create(iso);
+	cairo_t* block_cr = cairo_create(block);
+
+	if (tint != 0) {
+		cairo_surface_t* tinted = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 16, 16);
+		cairo_t* tinted_cr = cairo_create(tinted);
+
+		// Copies the block texture to a new surface
+		cairo_set_source_surface(tinted_cr, block, 0, 0);
+		cairo_paint(tinted_cr);
+
+		double r = (tint & 0xFF0000) >> 16;
+		double g = (tint & 0x00FF00) >> 8;
+		double b = (tint & 0x0000FF);
+		cairo_set_operator(tinted_cr, CAIRO_OPERATOR_MULTIPLY);
+		cairo_rectangle(tinted_cr, 0, 0, 16, 16);
+		cairo_set_source_rgba(tinted_cr, r/255, g/255, b/255, 1);
+		cairo_fill(tinted_cr);
+
+		cairo_set_operator(block_cr, CAIRO_OPERATOR_IN);
+		cairo_set_source_surface(block_cr, tinted, 0, 0);
+		cairo_paint(block_cr);
+
+		cairo_surface_destroy(tinted);
+		cairo_destroy(tinted_cr);
+	}
 
 	// Transformation matrices that apply a scaling
 	// and a shearing. It also applies a rotation for the TOP side.
@@ -229,12 +271,14 @@ cairo_surface_t* render_side(char* name, direction_t direction) {
 		break;
 	}
 	#undef COS_30
+
 	cairo_transform(iso_cr, &matrix);
 	cairo_set_source_surface(iso_cr, block, 0, 0);
 	cairo_paint(iso_cr);
 
 	free(path);
 	cairo_surface_destroy(block);
+	cairo_destroy(block_cr);
 	cairo_destroy(iso_cr);
 
 	return iso;
