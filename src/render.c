@@ -38,11 +38,11 @@ void draw_grass_block(DRAW_ARGS) {
 	DRAW_EASY("side", LEFT | RIGHT);
 	{
 		DRAW_GET_NAME("top");
-		draw_texture(cr, texture_name, screen_x, screen_y, sides & TOP, 0x55C93F);
+		draw_texture(cr, texture_name, screen_x, screen_y, sides & TOP, 0x91BD59);
 	}
 	{
 		DRAW_GET_NAME("overlay");
-		draw_texture(cr, texture_name, screen_x, screen_y, sides & (LEFT | RIGHT), 0x55C93F);
+		draw_texture(cr, texture_name, screen_x, screen_y, sides & (LEFT | RIGHT), 0x91BD59);
 	}
 }
 
@@ -211,6 +211,67 @@ void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides, in
 	}
 }
 
+void render_deform(cairo_t* iso_cr, cairo_surface_t* block, direction_t direction) {
+	// Transformation matrices that apply a scaling
+	// and a shearing. It also applies a rotation for the TOP side.
+	// Go look at: http://jeroenhoek.nl/articles/svg-and-isometric-projection.html
+	cairo_matrix_t matrix;
+
+	#define COS_30 0.86602540378
+	switch (direction) {
+		default:
+		case TOP:
+			matrix.x0 = 14;     matrix.y0 = 0;
+			matrix.xx = COS_30;   matrix.xy = -COS_30;
+			matrix.yx = 0.5;     matrix.yy = 0.5;
+			break;
+		case LEFT:
+			matrix.x0 = 0;      matrix.y0 = TILE_TOP_HEIGHT/2;
+			matrix.xx = COS_30;   matrix.xy = 0;
+			matrix.yx = 0.5;     matrix.yy = 1;
+			break;
+		case RIGHT:
+			matrix.x0 = TILE_WIDTH/2; matrix.y0 = TILE_TOP_HEIGHT;
+			matrix.xx = COS_30;   matrix.xy = 0;
+			matrix.yx = -0.5;    matrix.yy = 1;
+			break;
+	}
+	#undef COS_30
+
+	cairo_transform(iso_cr, &matrix);
+	cairo_set_source_surface(iso_cr, block, 0, 0);
+	cairo_paint(iso_cr);
+}
+
+void render_tint(cairo_t* block_cr, cairo_surface_t* block, int tint) {
+	cairo_surface_t* tinted = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 16, 16);
+	cairo_t* tinted_cr = cairo_create(tinted);
+
+	// Copies the block texture to a new surface
+	cairo_set_source_surface(tinted_cr, block, 0, 0);
+	cairo_paint(tinted_cr);
+
+	// Tints the surface
+	double r = (tint & 0xFF0000) >> 16;
+	double g = (tint & 0x00FF00) >> 8;
+	double b = (tint & 0x0000FF);
+	cairo_set_operator(tinted_cr, CAIRO_OPERATOR_MULTIPLY);
+	cairo_rectangle(tinted_cr, 0, 0, 16, 16);
+	cairo_set_source_rgba(tinted_cr, r/255, g/255, b/255, 1);
+	cairo_fill(tinted_cr);
+
+	// Pastes the tinted surface to the original one,
+	// clipped by the texture. This is necessary because
+	// otherwise, it would tint the parts of the images
+	// that are transparent.
+	cairo_set_operator(block_cr, CAIRO_OPERATOR_IN);
+	cairo_set_source_surface(block_cr, tinted, 0, 0);
+	cairo_paint(block_cr);
+
+	cairo_surface_destroy(tinted);
+	cairo_destroy(tinted_cr);
+}
+
 /**
  * Generate a Cairo surface of an isometric side
  * of a texture name.
@@ -222,59 +283,8 @@ cairo_surface_t* render_side(char* name, direction_t direction, int tint) {
 	cairo_t* iso_cr = cairo_create(iso);
 	cairo_t* block_cr = cairo_create(block);
 
-	if (tint != 0) {
-		cairo_surface_t* tinted = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 16, 16);
-		cairo_t* tinted_cr = cairo_create(tinted);
-
-		// Copies the block texture to a new surface
-		cairo_set_source_surface(tinted_cr, block, 0, 0);
-		cairo_paint(tinted_cr);
-
-		double r = (tint & 0xFF0000) >> 16;
-		double g = (tint & 0x00FF00) >> 8;
-		double b = (tint & 0x0000FF);
-		cairo_set_operator(tinted_cr, CAIRO_OPERATOR_MULTIPLY);
-		cairo_rectangle(tinted_cr, 0, 0, 16, 16);
-		cairo_set_source_rgba(tinted_cr, r/255, g/255, b/255, 1);
-		cairo_fill(tinted_cr);
-
-		cairo_set_operator(block_cr, CAIRO_OPERATOR_IN);
-		cairo_set_source_surface(block_cr, tinted, 0, 0);
-		cairo_paint(block_cr);
-
-		cairo_surface_destroy(tinted);
-		cairo_destroy(tinted_cr);
-	}
-
-	// Transformation matrices that apply a scaling
-	// and a shearing. It also applies a rotation for the TOP side.
-	// Go look at: http://jeroenhoek.nl/articles/svg-and-isometric-projection.html
-	cairo_matrix_t matrix;
-
-	#define COS_30 0.86602540378
-	switch (direction) {
-	default:
-	case TOP:
-		matrix.x0 = 14;     matrix.y0 = 0;
-		matrix.xx = COS_30;   matrix.xy = -COS_30;
-		matrix.yx = 0.5;     matrix.yy = 0.5;
-		break;
-	case LEFT:
-		matrix.x0 = 0;      matrix.y0 = TILE_TOP_HEIGHT/2;
-		matrix.xx = COS_30;   matrix.xy = 0;
-		matrix.yx = 0.5;     matrix.yy = 1;
-		break;
-	case RIGHT:
-		matrix.x0 = TILE_WIDTH/2; matrix.y0 = TILE_TOP_HEIGHT;
-		matrix.xx = COS_30;   matrix.xy = 0;
-		matrix.yx = -0.5;    matrix.yy = 1;
-		break;
-	}
-	#undef COS_30
-
-	cairo_transform(iso_cr, &matrix);
-	cairo_set_source_surface(iso_cr, block, 0, 0);
-	cairo_paint(iso_cr);
+	if (tint != 0) render_tint(block_cr, block, tint);
+	render_deform(iso_cr, block, direction);
 
 	free(path);
 	cairo_surface_destroy(block);
