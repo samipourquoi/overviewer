@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "render.h"
 #include "../parson/parson.h"
 
@@ -10,7 +11,7 @@
 #define CHUNK_HEIGHT 82
 #define IMAGE_HEIGHT (TILE_HEIGHT*CHUNK_HEIGHT + 168)
 #define IMAGE_WIDTH (TILE_WIDTH*16)
-#define IS_AIR(BLOCK) ((int)strcmp(BLOCK, "air") == 0 || (int)strcmp(BLOCK, "cave_air") == 0)
+#define IS_AIR(BLOCK) ((int)strcmp(BLOCK, "air") == 0 || (int)strcmp(BLOCK, "cave_air") == 0 || (int)strcmp(BLOCK, "grass") == 0)
 #define MIN(V1, V2) (V1 < V2 ? V2 : V1)
 
 void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
@@ -19,6 +20,7 @@ void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char side
 void draw_texture(cairo_t* cr, char* name, int x, int y, unsigned char sides, int tint);
 cairo_surface_t* render_side(char* name, direction_t direction, int tint);
 int render(chunk_t* chunk);
+void render_tint(cairo_t* block_cr, cairo_surface_t* block, int tint);
 
 ///=================================///
 ///       MODELS IMPLEMENTATION     ///
@@ -32,6 +34,19 @@ int render(chunk_t* chunk);
 #define DRAW_EASY(NAME, SIDES) { \
     DRAW_GET_NAME(NAME) \
 	draw_texture(cr, texture_name, screen_x, screen_y, sides & (SIDES), 0 ); \
+}
+
+void draw_tinted_grass(DRAW_ARGS) {
+	DRAW_GET_NAME("cross");
+	char* path = get_block_path(texture_name);
+	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
+	cairo_t* block_cr = cairo_create(block);
+	render_tint(block_cr, block, 0x91BD59);
+
+	cairo_set_source_surface(cr, block, screen_x + rand()%18, screen_y + TILE_TOP_HEIGHT/2);
+	cairo_paint(cr);
+	free(path);
+	cairo_surface_destroy(block);
 }
 
 void draw_grass_block(DRAW_ARGS) {
@@ -70,6 +85,9 @@ void draw_model(cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, 
 	} else if (strcmp(parent, "block/block") == 0) {
 
 		draw_grass_block(cr, textures, sides, screen_x, screen_y);
+	} else if (strcmp(parent, "minecraft:block/tinted_cross") == 0) {
+
+		draw_tinted_grass(cr, textures, sides, screen_x, screen_y);
 	}
 };
 
