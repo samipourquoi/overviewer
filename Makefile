@@ -5,7 +5,7 @@ LIB = -lz -lcairo
 
 all: $(BIN)
 
-$(BIN): overviewer.o parse.o render.o nbt.o parson.o
+$(BIN): overviewer.o parse.o render.o models.o nbt.o parson.o
 	$(CC) $(CFLAGS) $(LIB) *.o -o $(BIN)
 
 overviewer.o: src/overviewer.c src/overviewer.h
@@ -15,7 +15,10 @@ parse.o: src/parse.c src/parse.h
 	$(CC) $(CFLAGS) -c src/parse.c
 
 render.o: src/render.c src/render.h
-	$(CC) $(CFLAGS) -c src/render.c -o render.o
+	$(CC) $(CFLAGS) -c src/render.c
+
+models.o: src/models.c src/models.h
+	$(CC) $(CFLAGS) -c src/models.c
 
 nbt.o: src/nbt.c src/nbt.h
 	$(CC) $(CFLAGS) -c src/nbt.c
