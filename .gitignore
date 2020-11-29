@@ -3,7 +3,8 @@ overviewer
 assets/
 
 # Libs
-parson/
+thirdparty/*
+!thirdparty/Makefile
 
 # Debug
 *.nbt
