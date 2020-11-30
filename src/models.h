@@ -3,7 +3,6 @@
 
 #include <parson.h>
 
-void models_init();
 void draw_model(cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y, int z, char* parent);
 
 #endif

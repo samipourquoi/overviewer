@@ -3,11 +3,8 @@
 #include <string.h>
 #include <cairo/cairo.h>
 #include <parson.h>
-#include <strmap.h>
 #include "models.h"
 #include "render.h"
-
-
 
 #define DRAW_ARGS cairo_t* cr, JSON_Object* textures, unsigned char sides, int screen_x, int screen_y
 #define DRAW_GET_NAME(NAME) \
@@ -17,10 +14,6 @@
 #define DRAW_EASY(NAME, SIDES) { \
     DRAW_GET_NAME(NAME) \
 	draw_texture(cr, texture_name, screen_x, screen_y, sides & (SIDES), 0 ); \
-}
-
-void models_init() {
-
 }
 
 void draw_tinted_grass(DRAW_ARGS) {

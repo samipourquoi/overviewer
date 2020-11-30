@@ -4,10 +4,13 @@
 #include "parse.h"
 #include "render.h"
 #include "models.h"
+#include "assets.h"
 
 int main(void) {
 	srand(0xDEADBEEF);
-	models_init();
+	assets_init();
 	read_region_file(REGION_PATH, CHUNK_X, CHUNK_Z);
+	ht_destroy(blockstates_list);
+	free(blockstates_list);
 	return 0;
 }
