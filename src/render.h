@@ -17,6 +17,8 @@ typedef enum {
 	RIGHT   = 1<<2
 } direction_t;
 
+typedef unsigned char sides_t;
+
 int render(chunk_t* chunk);
 void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
 char* get_block_path(char* name);

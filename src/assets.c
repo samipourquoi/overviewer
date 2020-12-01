@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <parson.h>
 #include "assets.h"
+#include "models.h"
 
 void assets_read_blockstates(struct dirent* file) {
 	char blockstate_path[100];
@@ -71,6 +72,19 @@ void assets_init() {
 	while ((blockstate = readdir(blockstates)) != NULL) {
 		assets_read_blockstates(blockstate);
 	}
+
+	JSON_Value* value = json_parse_file("assets/models/block/furnace_on.json");
+	JSON_Object* root = json_value_get_object(value);
+	model_t* model = malloc(sizeof(model_t));
+	model_init(model);
+
+	model = models_parse(model, root);
+
+	printf("%s\n", model->elements[0]->south->texture);
+
+	model_free(model);
+	json_value_free(value);
+
 
 	closedir(blockstates);
 }
