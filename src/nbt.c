@@ -153,7 +153,11 @@ static void read_byte_array(const unsigned char* data, int* offset, int named, c
 static void read_string(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	char* name = READ_NAME;
 	int string_length = READ_BE(2);
-	char* string = (char*) read_bytes(data, offset, string_length);
+	char* string_raw = (char*)read_bytes(data, offset, string_length);
+	char* string = malloc(string_length + 1);
+	memcpy(string, string_raw, string_length);
+	string[string_length] = '\0';
+	free(string_raw);
 
 	nbt_value* value = CREATE_VALUE;
 	value->string_value = string;
