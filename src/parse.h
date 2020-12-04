@@ -21,7 +21,13 @@
 #define POS_ADD_Z(POS) ( (POS) + 0x0010 )
 
 typedef struct {
+	char* key;
+	char* value;
+} blockstate_t;
+
+typedef struct {
 	char** blocks;
+	blockstate_t** blockstates; /* Array of arrays of blockstate_t, for each block. */
 } chunk_t;
 
 /**

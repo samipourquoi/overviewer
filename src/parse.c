@@ -19,6 +19,7 @@ chunk_t* chunk_init() {
 	chunk_t* chunk = malloc(sizeof(chunk_t));
 	// Uses `calloc` in case some sections are missing
 	chunk->blocks = calloc(16*16*256, sizeof(char*));
+	chunk->blockstates = calloc(16*16*256, sizeof(blockstate_t*));
 	return chunk;
 }
 
@@ -137,13 +138,22 @@ unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length) {
 }
 
 
-char* get_block_from_index(nbt_tag* palette, int index) {
+void parse_palette_index(nbt_tag* palette, int index, chunk_t* chunk, pos_t coords) {
 	compound_tag* block = palette->value->list_value->values[index]->value->compound_value;
 	char* name = cmpd_get_from_name(block, "Name")->value->string_value;
 	int shortened_length = (int)strlen(name) - 10 + 1;
 	char* shortened_name = malloc(shortened_length);
 	memcpy(shortened_name, &name[10], shortened_length);
-	return shortened_name;
+	chunk->blocks[coords] = shortened_name;
+
+	nbt_tag* properties_tag = cmpd_get_from_name(block, "Properties");
+	if (properties_tag == NULL) return;
+	compound_tag* properties = properties_tag->value->list_value;
+	for (int i = 0; i < properties->size; i++) {
+		char* key = properties->values[i]->name;
+		char* value = properties->values[i]->value->string_value;
+		printf("for block %s\t%s: %s\n", name, key, value);
+	}
 }
 
 void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
@@ -166,9 +176,7 @@ void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
 				unsigned int shift = (j*block_length);
 				int palette_index = (line & ((unsigned long)bits_range << shift)) >> shift;
 
-				// The output array is ordered XYZ.
-				// They are stored in the region files as YZX however.
-				chunk->blocks[*coords] = get_block_from_index(palette, palette_index);
+				parse_palette_index(palette, palette_index, chunk, *coords);
 				(*coords)++;
 			}
 		}

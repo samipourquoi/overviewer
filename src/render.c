@@ -58,38 +58,11 @@ char* get_block_path(char* name) {
  * 	@see map_to_screen()
  */
 void draw_block(cairo_t* cr, char* name, int x, int y, int z, unsigned char sides) {
-	// char model_name[50];
-	// {
-	// 	// "assets/blockstates/": 19
-	// 	// ".json": 5
-	// 	// NULL terminating character: 1
-	// 	char* blockstate_path = malloc(19 + strlen(name) + 5 + 1);
-	// 	strcpy(blockstate_path, "assets/blockstates/");
-	// 	strcat(blockstate_path, name);
-	// 	strcat(blockstate_path, ".json");
-	//
-	// 	JSON_Value* blockstate = json_parse_file(blockstate_path);
-	// 	JSON_Object* root = json_value_get_object(blockstate);
-	// 	JSON_Object* variants = json_object_get_object(root, "variants");
-	// 	JSON_Value* variant_value = json_object_get_value_at(variants, 0);
-	//
-	// 	// It can either be an object (=one variant), or an
-	// 	// array of variants.
-	// 	JSON_Object* variant;
-	// 	if (json_type(variant_value) == JSONObject) {
-	// 		variant = json_value_get_object(variant_value);
-	// 	} else {
-	// 		variant = json_array_get_object(json_value_get_array(variant_value), 0);
-	// 	}
-	// 	char* model_id = (char*)json_object_get_string(variant, "model");
-	// 	memcpy(model_name, &model_id[16], 50);
-	//
-	// 	json_value_free(blockstate);
-	// 	free(blockstate_path);
-	// }
-
 	char* model_name = ht_lookup(blockstates_list, name);
-
+	if (model_name == NULL) {
+		fprintf(stderr, "Unknown block: %s\n", name);
+		return;
+	}
 	{
 		// "assets/models/block/": 21
 		// ".json": 5
@@ -231,7 +204,7 @@ int render(chunk_t* chunk) {
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
-	for (pos_t pos = 0; pos < 0x80FF; pos++) {
+	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
 		char* block = chunk->blocks[pos];
 		if (block == NULL) continue;
 		unsigned char sides = 0;

@@ -52,7 +52,18 @@ nbt_tag* cmpd_get_from_path(compound_tag* compound, char* path) {
 	return current_compound->to_tag;
 }
 
+void cmpd_init(compound_tag* compound) {
+	compound->_max_size = 20;
+	compound->values = malloc(20 * sizeof(struct nbt_tag*));
+	compound->size = 0;
+	compound->to_tag = NULL;
+}
+
 void cmpd_append_entry(compound_tag* compound, nbt_tag* tag) {
+	if (compound->size >= compound->_max_size) {
+		compound->_max_size *= 2;
+		compound->values = realloc(compound->values, compound->_max_size * sizeof(struct nbt_tag*));
+	}
 	compound->values[compound->size] = tag;
 	compound->size++;
 }
@@ -169,10 +180,10 @@ static void read_string(const unsigned char* data, int* offset, int named, compo
 static void read_list(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	compound_tag* new_list = calloc(1, sizeof(compound_tag)); // Lists are considered as compounds
+	compound_tag* new_list = malloc(1 * sizeof(compound_tag)); // Lists are considered as compounds
+	cmpd_init(new_list);
 	CREATE_TAG(name, value, TAG_List, compound->to_tag);
 
-	new_list->size = 0;
 	new_list->to_tag = tag;
 	value->list_value = new_list;
 
@@ -209,10 +220,10 @@ static void read_long_array(const unsigned char* data, int* offset, int named, c
 static void read_compound(const unsigned char* data, int* offset, int named, compound_tag* compound) {
 	nbt_value* value = CREATE_VALUE;
 	char* name = READ_NAME;
-	compound_tag* new_compound = calloc(1, sizeof(compound_tag));
+	compound_tag* new_compound = malloc(1 * sizeof(compound_tag));
+	cmpd_init(new_compound);
 	CREATE_TAG(name, value, TAG_Compound, compound->to_tag);
 
-	new_compound->size = 0;
 	new_compound->to_tag = tag;
 	value->compound_value = new_compound;
 
@@ -272,26 +283,26 @@ static void read_tags_inside(const unsigned char* data, int* offset, int named, 
  * @return
  */
 compound_tag* nbt_parse_tree(const unsigned char* data, int length) {
-	compound_tag root;
+	compound_tag* root = calloc(1, sizeof(compound_tag));
 	nbt_tag root_tag;
 	char* name = "root";
 
+	cmpd_init(root);
+	root->to_tag = &root_tag;
+
 	root_tag.value = &(nbt_value) {};
-	root_tag.value->compound_value = &root;
+	root_tag.value->compound_value = root;
 	root_tag.parent = NULL;
 	root_tag.name = name;
 	root_tag.type = TAG_Compound;
-
-	root.size = 0;
-	root.to_tag = &root_tag;
 
 	// READ_BE doesn't work without having a pointer 'offset'
 	int file_offset = 0;
 	int *offset = &file_offset;
 
-	read_tags_inside(data, offset, 1, &root);
+	read_tags_inside(data, offset, 1, root);
 
-	return root.values[0]->value->compound_value;
+	return root->values[0]->value->compound_value;
 }
 
 /**

@@ -34,10 +34,7 @@ void assets_read_blockstates(struct dirent* file) {
 	strcpy(blockstate_name, file->d_name);
 	ht_insert(blockstates_list, blockstate_name, model_name);
 
-	// This fucker interfere with some other memory,
-	// making the program segfaults sometimes.
-	// So we are not going to free memory 😎
-	// json_value_free(blockstate_json);
+	json_value_free(blockstate_json);
 }
 
 int ht_string_compare(void* first_key, void* second_key, size_t key_size) {
