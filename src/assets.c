@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <parson.h>
+#include <stdbool.h>
 #include "assets.h"
 
 void assets_parse_variants_states(char* variant_name, blockstate_t** blockstates) {
@@ -126,5 +127,33 @@ void assets_init() {
 
 model_t* assets_get_model(char* blockstate_name, blockstate_t** states) {
 	model_t** models = *(model_t***)ht_lookup(blockstates_list, blockstate_name);
+
+	// All arrays are NULL-terminated
+	for (int i = 0; models[i] != NULL; i++) {
+		model_t* model = models[i];
+
+		// Will be set to `false` if it doesn't correspond.
+		bool corresponds = true;
+		for (int j = 0; states[j] != NULL; j++) {
+			bool temp_corresponds = false;
+			blockstate_t* given_bs = states[j];
+			for (int k = 0; model->blockstates[k] != NULL; k++) {
+				blockstate_t* model_bs = model->blockstates[k];
+
+				if (strcmp(given_bs->key, model_bs->key) == 0 &&
+					strcmp(given_bs->value, model_bs->value) == 0) {
+
+					temp_corresponds = true;
+					break;
+				}
+			}
+			if (!temp_corresponds) {
+				corresponds = false;
+			}
+		}
+
+		if (corresponds) return model;
+	}
+
 	return NULL;
 }
