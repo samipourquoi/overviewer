@@ -6,8 +6,10 @@
 #include <stdbool.h>
 #include "assets.h"
 
-void assets_parse_variants_states(char* variant_name, blockstate_t** blockstates) {
+blockstate_t** assets_parse_variants_states(char* variant_name) {
 	const char* delim = ",=";
+	size_t current_size = 1;
+	blockstate_t** blockstates = malloc((current_size+1) * sizeof(blockstate_t*));
 	blockstate_t* blockstate;
 	char* token = strtok(variant_name, delim);
 	int i;
@@ -21,12 +23,17 @@ void assets_parse_variants_states(char* variant_name, blockstate_t** blockstates
 			// When it's a value
 			blockstate->value = malloc(strlen(token) + 1);
 			strcpy(blockstate->value, token);
+			if (i-1 > current_size) {
+				current_size *= 2;
+				blockstates = realloc(blockstates, (current_size+1) * sizeof(blockstate_t*));
+			}
 			blockstates[(i-1) / 2] = blockstate;
 		}
 		token = strtok(NULL, delim);
 	}
 	// NULL-terminates the array
 	blockstates[i/2] = NULL;
+	return blockstates;
 }
 
 model_t** assets_read_variants(JSON_Object* variants) {
@@ -34,9 +41,8 @@ model_t** assets_read_variants(JSON_Object* variants) {
 	model_t** models = malloc((variants_amount+1) * sizeof(model_t*));
 	// We NULL-terminate the array, hence the +1.
 	for (int i = 0; i < variants_amount; i++) {
-		blockstate_t** blockstates = malloc((variants_amount+1) * sizeof(blockstate_t));
 		char* variant_name = (char*)json_object_get_name(variants, i);
-		assets_parse_variants_states(variant_name, blockstates);
+		blockstate_t** blockstates = assets_parse_variants_states(variant_name);
 
 		// It can either be an object (=one variant), or an
 		// array of variants.
@@ -147,13 +153,10 @@ model_t* assets_get_model(char* blockstate_name, blockstate_t** states) {
 					break;
 				}
 			}
-			if (!temp_corresponds) {
-				corresponds = false;
-			}
+			if (!temp_corresponds) corresponds = false;
 		}
-
 		if (corresponds) return model;
 	}
 
-	return NULL;
+	return models[0];
 }

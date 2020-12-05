@@ -205,15 +205,15 @@ int render(chunk_t* chunk) {
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
 	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
-		char* block = chunk->blocks[pos];
-		if (block == NULL) continue;
+		char* block_name = chunk->blocks[pos];
+		if (block_name == NULL) continue;
 		unsigned char sides = 0;
 
 		blockstate_t** bs_list = chunk->blockstates[pos];
 		if (bs_list != NULL) {
-			for (int i = 0; bs_list[i] != NULL; i++) {
-				printf("%s with %s\n", bs_list[i]->key, bs_list[i]->value);
-			}
+			model_t* model = assets_get_model(block_name, bs_list);
+			// if (model != NULL)
+				// printf("%s\n", model->elements[0]->up->texture);
 		}
 
 		char* top_block = chunk->blocks[POS_ADD_Y(pos)];
@@ -226,7 +226,7 @@ int render(chunk_t* chunk) {
 
 		if (sides == 0) continue;
 
-		draw_block(cr, block, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
+		draw_block(cr, block_name, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
 	}
 
 	cairo_surface_write_to_png(surface, "render.png");

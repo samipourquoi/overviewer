@@ -68,8 +68,9 @@ void models_parse_texture(model_side_t* side, JSON_Object* textures, char** side
 }
 
 void models_parse_textures(model_t* model, JSON_Object* textures) {
-	for (int i = 0; i < model->elements_amount-1; i++) {
+	for (int i = 0; i < model->elements_amount; i++) {
 		model_element_t* element = model->elements[i];
+		if (element == NULL) break;
 		if (element->up_name != NULL) {
 			models_parse_texture(element->up, textures, &element->up_name);
 		}
