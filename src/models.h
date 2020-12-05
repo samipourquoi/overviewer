@@ -29,6 +29,7 @@ typedef struct {
 	char** faces_name;
 	int faces_amount;
 	sides_t culling;
+	blockstate_t** blockstates;
 } model_t;
 
 void draw_model(cairo_t* cr, JSON_Object* textures, unsigned char sides, int x, int y, int z, char* parent);

@@ -18,11 +18,12 @@
 }
 
 void model_init(model_t* model) {
-	model->elements = calloc(20, sizeof(model_element_t));
+	model->elements = calloc(20, sizeof(model_element_t*));
 	model->faces_name = calloc(20, sizeof(char*));
 	model->elements_amount = 0;
 	model->faces_amount = 0;
 	model->culling = 0;
+	model->blockstates = NULL;
 }
 
 void model_free(model_t* model) {
@@ -67,7 +68,7 @@ void models_parse_texture(model_side_t* side, JSON_Object* textures, char** side
 }
 
 void models_parse_textures(model_t* model, JSON_Object* textures) {
-	for (int i = 0; i < model->elements_amount; i++) {
+	for (int i = 0; i < model->elements_amount-1; i++) {
 		model_element_t* element = model->elements[i];
 		if (element->up_name != NULL) {
 			models_parse_texture(element->up, textures, &element->up_name);
@@ -105,7 +106,7 @@ void models_parse_side(model_t* model, model_element_t* element, JSON_Object* fa
 }
 
 model_element_t* models_parse_element(model_t* model, JSON_Object* element_json) {
-	model_element_t* element = malloc(sizeof(model_element_t));
+	model_element_t* element = calloc(1, sizeof(model_element_t));
 	model->elements_amount++;
 	JSON_Array* from = json_object_get_array(element_json, "from");
 	JSON_Array* to = json_object_get_array(element_json, "to");
@@ -139,15 +140,14 @@ model_element_t* models_parse_element(model_t* model, JSON_Object* element_json)
 model_t* models_parse(model_t* model, JSON_Object* root) {
 	char* parent = (char*)json_object_get_string(root, "parent");
 	if (parent != NULL && strcmp(parent, "block/block") != 0) {
-		char parent_path[60];
+		char* parent_path = malloc(26 + strlen(parent));
 		strcpy(parent_path, "assets/models/");
 		strcat(parent_path, &parent[parent[9] == ':' ? 10 : 0]);
 		strcat(parent_path, ".json");
 		JSON_Value* parent_value = json_parse_file(parent_path);
 		JSON_Object* parent_model = json_value_get_object(parent_value);
 
-		printf("%s\n", parent_path);
-
+		free(parent_path);
 		models_parse(model, parent_model);
 		json_value_free(parent_value);
 	}

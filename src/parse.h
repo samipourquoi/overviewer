@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
 	char** blocks;
-	blockstate_t** blockstates; /* Array of arrays of blockstate_t, for each block. */
+	blockstate_t*** blockstates; /* Array of arrays of pointers blockstate_t, for each block. */
 } chunk_t;
 
 /**

@@ -149,11 +149,24 @@ void parse_palette_index(nbt_tag* palette, int index, chunk_t* chunk, pos_t coor
 	nbt_tag* properties_tag = cmpd_get_from_name(block, "Properties");
 	if (properties_tag == NULL) return;
 	compound_tag* properties = properties_tag->value->list_value;
+	blockstate_t** blockstates = malloc((properties->size + 1) * sizeof(blockstate_t));
+
 	for (int i = 0; i < properties->size; i++) {
 		char* key = properties->values[i]->name;
 		char* value = properties->values[i]->value->string_value;
-		printf("for block %s\t%s: %s\n", name, key, value);
+
+		/* Not bullshit */
+		blockstate_t* bs = malloc(sizeof(blockstate_t));
+		bs->key = malloc(strlen(key) + 1);
+		bs->value = malloc(strlen(value) + 1);
+		strcpy(bs->key, key);
+		strcpy(bs->value, value);
+		blockstates[i] = bs;
+		// printf("for block %s\t%s: %s\n", name, key, value);
 	}
+
+	blockstates[properties->size] = NULL;
+	chunk->blockstates[coords] = blockstates;
 }
 
 void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {

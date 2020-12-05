@@ -209,6 +209,13 @@ int render(chunk_t* chunk) {
 		if (block == NULL) continue;
 		unsigned char sides = 0;
 
+		blockstate_t** bs_list = chunk->blockstates[pos];
+		if (bs_list != NULL) {
+			for (int i = 0; bs_list[i] != NULL; i++) {
+				printf("%s with %s\n", bs_list[i]->key, bs_list[i]->value);
+			}
+		}
+
 		char* top_block = chunk->blocks[POS_ADD_Y(pos)];
 		char* left_block = chunk->blocks[POS_ADD_Z(pos)];
 		char* right_block = chunk->blocks[POS_ADD_X(pos)];
