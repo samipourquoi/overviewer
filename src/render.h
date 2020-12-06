@@ -18,18 +18,18 @@ typedef enum {
 	RIGHT = 1 << 2
 } direction_t;
 
-int render(chunk_t *chunk);
+int render(chunk_t* chunk);
 
-void map_to_screen(int x, int y, int z, int *screen_x, int *screen_y);
+void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
 
-char *get_block_path(char *name);
+char* get_block_path(char* name);
 
-void draw_block(cairo_t *cr, model_t *model, int x, int y, int z, sides_t sides);
+void draw_block(cairo_t* cr, model_t* model, int x, int y, int z, sides_t sides);
 
-void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides, int tint);
+void draw_texture(cairo_t* cr, model_t* model, int x, int y, unsigned char sides, int tint);
 
-cairo_surface_t *render_side(char *name, direction_t direction, int tint);
+cairo_surface_t* render_side(char* name, direction_t direction, int tint);
 
-void render_tint(cairo_t *block_cr, cairo_surface_t *block, int tint);
+void render_tint(cairo_t* block_cr, cairo_surface_t* block, int tint);
 
 #endif

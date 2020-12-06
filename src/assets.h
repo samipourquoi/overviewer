@@ -7,10 +7,10 @@
 #include "models.h"
 #include "render.h"
 
-HashTable *blockstates_list;
+HashTable* blockstates_list;
 
 void assets_init();
 
-model_t *assets_get_model(char *blockstate_name, blockstate_t **states);
+model_t* assets_get_model(char* blockstate_name, blockstate_t** states);
 
 #endif

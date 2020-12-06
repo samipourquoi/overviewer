@@ -20,7 +20,7 @@ typedef enum nbt_type {
 } nbt_type;
 
 typedef struct nbt_value {
-	unsigned char *raw_bytes;
+	unsigned char* raw_bytes;
 	union {
 		signed char byte_value;
 		short short_value;
@@ -28,39 +28,39 @@ typedef struct nbt_value {
 		long long_value;
 		float float_value;
 		double double_value;
-		signed char *byte_array_value;
-		char *string_value;
-		struct compound_tag *list_value; // Lists are considered as compounds
-		struct compound_tag *compound_value;
-		int *int_array_value;
-		long *long_array_value;
+		signed char* byte_array_value;
+		char* string_value;
+		struct compound_tag* list_value; // Lists are considered as compounds
+		struct compound_tag* compound_value;
+		int* int_array_value;
+		long* long_array_value;
 	};
 	int array_length;
 } nbt_value;
 
 typedef struct nbt_tag {
-	char *name;             // Name of the tag
-	nbt_value *value;       // Value of the tag
+	char* name;             // Name of the tag
+	nbt_value* value;       // Value of the tag
 	nbt_type type;          // Type of the tag
-	struct nbt_tag *parent; // Pointer to the parent tag
+	struct nbt_tag* parent; // Pointer to the parent tag
 } nbt_tag;
 
 struct compound_tag {
 	int size;
 	int _max_size;
-	struct nbt_tag *to_tag;
-	struct nbt_tag **values;
+	struct nbt_tag* to_tag;
+	struct nbt_tag** values;
 };
 typedef struct compound_tag compound_tag;
 
-struct nbt_tag *cmpd_get_from_name(compound_tag *compound, char *name);
+struct nbt_tag* cmpd_get_from_name(compound_tag* compound, char* name);
 
-struct nbt_tag *cmpd_get_from_path(compound_tag *compound, char *path);
+struct nbt_tag* cmpd_get_from_path(compound_tag* compound, char* path);
 
-void cmpd_append_entry(compound_tag *compound, struct nbt_tag *tag);
+void cmpd_append_entry(compound_tag* compound, struct nbt_tag* tag);
 
-struct compound_tag *nbt_parse_tree(const unsigned char *data, int length);
+struct compound_tag* nbt_parse_tree(const unsigned char* data, int length);
 
-int nbt_free(struct compound_tag *compound);
+int nbt_free(struct compound_tag* compound);
 
 #endif

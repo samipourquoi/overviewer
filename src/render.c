@@ -19,7 +19,7 @@
  * (15; 0; 15) is at the front.
  * The Y value can vary from 0 to `CHUNK_HEIGHT`.
  */
-void map_to_screen(int x, int y, int z, int *screen_x, int *screen_y) {
+void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y) {
 	// Makes z=0 start at the top instead of at the bottom.
 	z = 15 - z;
 
@@ -39,13 +39,13 @@ void map_to_screen(int x, int y, int z, int *screen_x, int *screen_y) {
  * @warning
  * Don't forget to free() the returned string!
  */
-char *get_block_path(char *name) {
+char* get_block_path(char* name) {
 	// char* shorten_texture = name[9] == ':' ? malloc(strlen(name) - 16 /* minecraft:block/ */ + 1 /* \0 */);
-	char *shorten = &name[name[0] == 'm' ? 16 : 6];
+	char* shorten = &name[name[0] == 'm' ? 16 : 6];
 
-	char *dir = "assets/textures/"; // length: 16
-	char *extension = ".png"; // length: 4
-	char *path = malloc(16 + 4 + strlen(shorten) + 1);
+	char* dir = "assets/textures/"; // length: 16
+	char* extension = ".png"; // length: 4
+	char* path = malloc(16 + 4 + strlen(shorten) + 1);
 
 	strcpy(path, dir);
 	strcat(path, shorten);
@@ -60,21 +60,21 @@ char *get_block_path(char *name) {
  *
  * 	@see map_to_screen()
  */
-void draw_block(cairo_t *cr, model_t *model, int x, int y, int z, sides_t sides) {
+void draw_block(cairo_t* cr, model_t* model, int x, int y, int z, sides_t sides) {
 	draw_model(cr, model, sides, x, y, z);
 }
 
 /**
  * Draw a texture on given sides, at a given screen coordinate.
  */
-void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides, int tint) {
-	cairo_surface_t *surface = NULL;
+void draw_texture(cairo_t* cr, model_t* model, int x, int y, unsigned char sides, int tint) {
+	cairo_surface_t* surface = NULL;
 	if (model->elements_amount == 0) return;
-	model_element_t *element = model->elements[0];
+	model_element_t* element = model->elements[0];
 	if (element == NULL) return;
 
 	if (sides & TOP) {
-		model_side_t *side = element->up;
+		model_side_t* side = element->up;
 		if (side != NULL) {
 			surface = render_side(side->texture, TOP, tint);
 			cairo_set_source_surface(cr, surface, x, y);
@@ -83,7 +83,7 @@ void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides
 		}
 	}
 	if (sides & LEFT) {
-		model_side_t *side = element->south;
+		model_side_t* side = element->south;
 		if (side != NULL) {
 			surface = render_side(side->texture, LEFT, tint);
 			cairo_set_source_surface(cr, surface, x, y);
@@ -92,7 +92,7 @@ void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides
 		}
 	}
 	if (sides & RIGHT) {
-		model_side_t *side = element->east;
+		model_side_t* side = element->east;
 		if (side != NULL) {
 			surface = render_side(side->texture, RIGHT, tint);
 			cairo_set_source_surface(cr, surface, x, y);
@@ -102,7 +102,7 @@ void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides
 	}
 }
 
-void render_deform(cairo_t *iso_cr, cairo_surface_t *block, direction_t direction) {
+void render_deform(cairo_t* iso_cr, cairo_surface_t* block, direction_t direction) {
 	// Transformation matrices that apply a scaling
 	// and a shearing. It also applies a rotation for the TOP side.
 	// Go look at: http://jeroenhoek.nl/articles/svg-and-isometric-projection.html
@@ -143,9 +143,9 @@ void render_deform(cairo_t *iso_cr, cairo_surface_t *block, direction_t directio
 	cairo_paint(iso_cr);
 }
 
-void render_tint(cairo_t *block_cr, cairo_surface_t *block, int tint) {
-	cairo_surface_t *tinted = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 16, 16);
-	cairo_t *tinted_cr = cairo_create(tinted);
+void render_tint(cairo_t* block_cr, cairo_surface_t* block, int tint) {
+	cairo_surface_t* tinted = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 16, 16);
+	cairo_t* tinted_cr = cairo_create(tinted);
 
 	// Copies the block texture to a new surface
 	cairo_set_source_surface(tinted_cr, block, 0, 0);
@@ -176,12 +176,12 @@ void render_tint(cairo_t *block_cr, cairo_surface_t *block, int tint) {
  * Generate a Cairo surface of an isometric side
  * of a texture name.
  */
-cairo_surface_t *render_side(char *name, direction_t direction, int tint) {
-	char *path = get_block_path(name);
-	cairo_surface_t *block = cairo_image_surface_create_from_png(path);
-	cairo_surface_t *iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
-	cairo_t *iso_cr = cairo_create(iso);
-	cairo_t *block_cr = cairo_create(block);
+cairo_surface_t* render_side(char* name, direction_t direction, int tint) {
+	char* path = get_block_path(name);
+	cairo_surface_t* block = cairo_image_surface_create_from_png(path);
+	cairo_surface_t* iso = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 32, 32);;
+	cairo_t* iso_cr = cairo_create(iso);
+	cairo_t* block_cr = cairo_create(block);
 
 	if (tint != 0) render_tint(block_cr, block, tint);
 	render_deform(iso_cr, block, direction);
@@ -198,29 +198,30 @@ cairo_surface_t *render_side(char *name, direction_t direction, int tint) {
  * Entrypoint of the rendering process.
  * Renders to an isometric view the given chunk content.
  */
-int render(chunk_t *chunk) {
-	cairo_surface_t *surface;
-	cairo_t *cr;
+int render(chunk_t* chunk) {
+	cairo_surface_t* surface;
+	cairo_t* cr;
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, IMAGE_WIDTH, IMAGE_HEIGHT);
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
+	const model_t* air_model_ptr = assets_get_model("air", NULL);
+	printf("%p\n", air_model_ptr);
 
 	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
-		char *block_name = chunk->blocks[pos];
-		if (block_name == NULL) continue;
-		unsigned char sides = 0;
+		model_t* model = chunk->blocks[pos];
+		if (model == NULL || model == air_model_ptr) continue;
+		sides_t sides = 0;
 
-		blockstate_t **bs_list = chunk->blockstates[pos];
-		model_t *model = assets_get_model(block_name, bs_list);
-		if (model == NULL) continue;
+		model_t* top_block = chunk->blocks[POS_ADD_Y(pos)];
+		model_t* left_block = chunk->blocks[POS_ADD_Z(pos)];
+		model_t* right_block = chunk->blocks[POS_ADD_X(pos)];
 
-		char *top_block = chunk->blocks[POS_ADD_Y(pos)];
-		char *left_block = chunk->blocks[POS_ADD_Z(pos)];
-		char *right_block = chunk->blocks[POS_ADD_X(pos)];
-
-		if (POS_GET_Y(pos) == 255 || (top_block != NULL && IS_AIR(top_block))) sides |= TOP;
-		if (POS_GET_Z(pos) == 15 || (left_block != NULL && IS_AIR(left_block))) sides |= LEFT;
-		if (POS_GET_X(pos) == 15 || (right_block != NULL && IS_AIR(right_block))) sides |= RIGHT;
+		if (POS_GET_Y(pos) == 255 || (top_block != NULL && !top_block->is_cube))
+			sides |= TOP;
+		if (POS_GET_Z(pos) == 15 || (left_block != NULL && !left_block->is_cube))
+			sides |= LEFT;
+		if (POS_GET_X(pos) == 15 || (right_block != NULL && !right_block->is_cube))
+			sides |= RIGHT;
 
 		if (sides == 0) continue;
 
