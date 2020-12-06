@@ -17,6 +17,8 @@ typedef struct {
 	int resize[4];
 	double scale_x;
 	double scale_y;
+	char* overlay;
+	int tint_index;
 } model_side_t;
 
 typedef struct {

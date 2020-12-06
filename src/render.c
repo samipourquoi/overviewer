@@ -64,19 +64,26 @@ void draw_block(cairo_t* cr, model_t* model, int x, int y, int z, sides_t sides)
 	draw_model(cr, model, sides, x, y, z);
 }
 
+int render_get_tint_for(int tint_index) {
+	switch (tint_index) {
+	case 0:
+		return 0x91BD59;
+	default:
+		return 0;
+	}
+}
+
 /**
  * Draw a texture on given sides, at a given screen coordinate.
  */
-void draw_texture(cairo_t* cr, model_t* model, int x, int y, unsigned char sides, int tint) {
+void draw_texture(cairo_t* cr, model_element_t* element, int x, int y, unsigned char sides, int tint) {
 	cairo_surface_t* surface = NULL;
-	if (model->elements_amount == 0) return;
-	model_element_t* element = model->elements[0];
 	if (element == NULL) return;
 
 	if (sides & TOP) {
 		model_side_t* side = element->up;
 		if (side != NULL) {
-			surface = render_side(side->texture, TOP, tint);
+			surface = render_side(side->texture, TOP, render_get_tint_for(side->tint_index));
 			cairo_set_source_surface(cr, surface, x, y);
 			cairo_paint(cr);
 			cairo_surface_destroy(surface);
@@ -85,7 +92,7 @@ void draw_texture(cairo_t* cr, model_t* model, int x, int y, unsigned char sides
 	if (sides & LEFT) {
 		model_side_t* side = element->south;
 		if (side != NULL) {
-			surface = render_side(side->texture, LEFT, tint);
+			surface = render_side(side->texture, LEFT, render_get_tint_for(side->tint_index));
 			cairo_set_source_surface(cr, surface, x, y);
 			cairo_paint(cr);
 			cairo_surface_destroy(surface);
@@ -94,7 +101,7 @@ void draw_texture(cairo_t* cr, model_t* model, int x, int y, unsigned char sides
 	if (sides & RIGHT) {
 		model_side_t* side = element->east;
 		if (side != NULL) {
-			surface = render_side(side->texture, RIGHT, tint);
+			surface = render_side(side->texture, RIGHT, render_get_tint_for(side->tint_index));
 			cairo_set_source_surface(cr, surface, x, y);
 			cairo_paint(cr);
 			cairo_surface_destroy(surface);

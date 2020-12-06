@@ -109,6 +109,12 @@ void models_parse_side(model_t* model, model_element_t* element, JSON_Object* fa
 		return;
 	}
 
+	if (json_object_has_value(face, "tintindex")) {
+		side->tint_index = (int)json_object_get_number(face, "tintindex");
+	} else {
+		side->tint_index = -1;
+	}
+
 	models_insert_face_name(model, dir_tag);
 }
 
@@ -209,8 +215,10 @@ void draw_grass_block(DRAW_ARGS) {
 void draw_model(cairo_t* cr, model_t* model, unsigned char sides, int x, int y, int z) {
 	int screen_x, screen_y;
 	map_to_screen(x, y, z, &screen_x, &screen_y);
-
-	draw_texture(cr, model, screen_x, screen_y, sides, 0);
+	for (int i = 0; i < model->elements_amount; i++) {
+		model_element_t* element = model->elements[i];
+		draw_texture(cr, element, screen_x, screen_y, sides, 0);
+	}
 
 	// if (strcmp(parent, "minecraft:block/cube_all") == 0) {
 	//
