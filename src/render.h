@@ -26,7 +26,7 @@ char *get_block_path(char *name);
 
 void draw_block(cairo_t *cr, model_t *model, int x, int y, int z, sides_t sides);
 
-void draw_texture(cairo_t *cr, char *name, int x, int y, unsigned char sides, int tint);
+void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides, int tint);
 
 cairo_surface_t *render_side(char *name, direction_t direction, int tint);
 

@@ -200,12 +200,7 @@ void draw_model(cairo_t *cr, model_t *model, unsigned char sides, int x, int y, 
 	int screen_x, screen_y;
 	map_to_screen(x, y, z, &screen_x, &screen_y);
 
-	if (sides & LEFT) {
-		model_side_t *side = model->elements[0]->south;
-		if (side != NULL) {
-			draw_texture(cr, side->texture, screen_x, screen_y, LEFT, 0);
-		}
-	}
+	draw_texture(cr, model, screen_x, screen_y, sides, 0);
 
 	// if (strcmp(parent, "minecraft:block/cube_all") == 0) {
 	//

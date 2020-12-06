@@ -40,12 +40,15 @@ void map_to_screen(int x, int y, int z, int *screen_x, int *screen_y) {
  * Don't forget to free() the returned string!
  */
 char *get_block_path(char *name) {
+	// char* shorten_texture = name[9] == ':' ? malloc(strlen(name) - 16 /* minecraft:block/ */ + 1 /* \0 */);
+	char *shorten = &name[name[0] == 'm' ? 16 : 6];
+
 	char *dir = "assets/textures/"; // length: 16
 	char *extension = ".png"; // length: 4
-	char *path = malloc(16 + 4 + strlen(name) + 1);
+	char *path = malloc(16 + 4 + strlen(shorten) + 1);
 
 	strcpy(path, dir);
-	strcat(path, name);
+	strcat(path, shorten);
 	strcat(path, extension);
 
 	return path;
@@ -64,25 +67,38 @@ void draw_block(cairo_t *cr, model_t *model, int x, int y, int z, sides_t sides)
 /**
  * Draw a texture on given sides, at a given screen coordinate.
  */
-void draw_texture(cairo_t *cr, char *name, int x, int y, unsigned char sides, int tint) {
+void draw_texture(cairo_t *cr, model_t *model, int x, int y, unsigned char sides, int tint) {
 	cairo_surface_t *surface = NULL;
+	if (model->elements_amount == 0) return;
+	model_element_t *element = model->elements[0];
+	if (element == NULL) return;
+
 	if (sides & TOP) {
-		surface = render_side(name, TOP, tint);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-		cairo_surface_destroy(surface);
+		model_side_t *side = element->up;
+		if (side != NULL) {
+			surface = render_side(side->texture, TOP, tint);
+			cairo_set_source_surface(cr, surface, x, y);
+			cairo_paint(cr);
+			cairo_surface_destroy(surface);
+		}
 	}
 	if (sides & LEFT) {
-		surface = render_side(name, LEFT, tint);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-		cairo_surface_destroy(surface);
+		model_side_t *side = element->south;
+		if (side != NULL) {
+			surface = render_side(side->texture, LEFT, tint);
+			cairo_set_source_surface(cr, surface, x, y);
+			cairo_paint(cr);
+			cairo_surface_destroy(surface);
+		}
 	}
 	if (sides & RIGHT) {
-		surface = render_side(name, RIGHT, tint);
-		cairo_set_source_surface(cr, surface, x, y);
-		cairo_paint(cr);
-		cairo_surface_destroy(surface);
+		model_side_t *side = element->east;
+		if (side != NULL) {
+			surface = render_side(side->texture, RIGHT, tint);
+			cairo_set_source_surface(cr, surface, x, y);
+			cairo_paint(cr);
+			cairo_surface_destroy(surface);
+		}
 	}
 }
 
@@ -196,6 +212,7 @@ int render(chunk_t *chunk) {
 
 		blockstate_t **bs_list = chunk->blockstates[pos];
 		model_t *model = assets_get_model(block_name, bs_list);
+		if (model == NULL) continue;
 
 		char *top_block = chunk->blocks[POS_ADD_Y(pos)];
 		char *left_block = chunk->blocks[POS_ADD_Z(pos)];
@@ -207,7 +224,7 @@ int render(chunk_t *chunk) {
 
 		if (sides == 0) continue;
 
-		draw_block(cr, block_name, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
+		draw_block(cr, model, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
 	}
 
 	cairo_surface_write_to_png(surface, "render.png");
