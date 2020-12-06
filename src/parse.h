@@ -1,5 +1,6 @@
 #ifndef OVERVIEWER_PARSE_H
 #define OVERVIEWER_PARSE_H
+
 #include <png.h>
 
 #include <stdio.h>
@@ -21,13 +22,13 @@
 #define POS_ADD_Z(POS) ( (POS) + 0x0010 )
 
 typedef struct {
-	char* key;
-	char* value;
+	char *key;
+	char *value;
 } blockstate_t;
 
 typedef struct {
-	char** blocks;
-	blockstate_t*** blockstates; /* Array of arrays of pointers blockstate_t, for each block. */
+	char **blocks;
+	blockstate_t ***blockstates; /* Array of arrays of pointers blockstate_t, for each block. */
 } chunk_t;
 
 /**
@@ -49,15 +50,18 @@ typedef struct {
  */
 typedef unsigned short pos_t;
 
-chunk_t* chunk_init();
-void chunk_free(chunk_t* chunk);
+chunk_t *chunk_init();
+
+void chunk_free(chunk_t *chunk);
 
 ///=================================///
 ///           CHUNK READING         ///
 ///=================================///
 
-compound_tag* parse_chunk(unsigned char* data, int length);
-int read_region_file(char* path, int chunkX, int chunkZ);
-unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length);
+compound_tag *parse_chunk(unsigned char *data, int length);
+
+int read_region_file(char *path, int chunkX, int chunkZ);
+
+unsigned char *read_chunk_data(FILE *region, int c_length, int *unc_length);
 
 #endif
