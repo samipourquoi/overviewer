@@ -1,8 +1,19 @@
-all: overviewer
+CC = gcc
+CFLAGS = -Wfatal-errors -g $(HEADERS)
+HEADERS = -Ithirdparty/parson -Ithirdparty/hashtable
+LIB = -lz -lcairo -Lthirdparty/ -ldeps
+CORE = build/core
 
-.PHONY: overviewer
-overviewer:
-	cd src && $(MAKE)
+all: builddir core
+
+builddir:
+	mkdir -p $(CORE)
+
+core: assets.o models.o nbt.o overviewer.o parse.o render.o
+	$(CC) $(CFLAGS) $(LIB) $(CORE)/*.o -o overviewer
+
+%.o: src/core/%.c src/core/%.h
+	$(CC) -c $(CFLAGS) $< -o $(CORE)/$@
 
 install:
 	cd thirdparty && $(MAKE)
@@ -12,4 +23,4 @@ uninstall:
 
 clean:
 	rm -f overviewer
-	cd src && $(MAKE) clean
+	rm -rf build
