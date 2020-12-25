@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"target": "ES6",
+		"outDir": "build/server/",
+		"incremental": true,
+		"module": "CommonJS",
+		"moduleResolution": "Node"
+	},
+	"include": [
+		"src/server/**.ts"
+	],
+	"exclude": [
+		"node_modules/",
+		"build/",
+		"thirdparty/",
+		"assets/"
+	]
+}

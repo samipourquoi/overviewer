@@ -2,7 +2,15 @@
 overviewer
 assets/
 
+# TypeScript
+
+# Build
+dist/
+build/
+**.tsbuildinfo
+
 # Libs
+node_modules/
 thirdparty/*
 !thirdparty/Makefile
 
