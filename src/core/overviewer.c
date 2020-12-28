@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "overviewer.h"
-#include "parse.h"
+#include "chunks.h"
 #include "render.h"
 #include "models.h"
 #include "assets.h"
@@ -18,9 +18,13 @@ int main(void) {
 void core_start() {
 	srand(0xDEADBEEF);
 	assets_init();
+	chunks_init_db();
+	chunks_set_at(20, 0);
+	chunks_get_at(20, 4);
 }
 
 void core_end() {
+
 	ht_destroy(blockstates_list);
 	free(blockstates_list);
 }

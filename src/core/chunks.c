@@ -3,7 +3,8 @@
 #include <zlib.h>
 #include <math.h>
 #include <string.h>
-#include "parse.h"
+#include <lmdb.h>
+#include "chunks.h"
 #include "nbt.h"
 #include "render.h"
 #include "assets.h"
@@ -230,4 +231,54 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 
 	chunk_free(chunk);
 	return NULL;
+}
+
+
+MDB_env* env;
+void chunks_init_db() {
+	mdb_env_create(&env);
+	mdb_env_set_maxdbs(env, 1);
+	mdb_env_set_mapsize(env, 10485760);
+	mdb_env_open(env, "chunks", MDB_NOTLS, 0664);
+}
+
+#define GENERATE_KEY(POS) \
+	(MDB_val) { \
+		.mv_data = &(POS), \
+		.mv_size = 2 * sizeof(int) \
+	}
+
+void chunks_set_at(int x, int z) {
+	char* test = "hello";
+
+	MDB_txn* txn;
+	MDB_dbi dbi;
+	int pos[2] = { x, z };
+	MDB_val key = GENERATE_KEY(pos);
+	MDB_val value = {
+			.mv_data = test,
+			.mv_size = 6
+	};
+
+	mdb_txn_begin(env, NULL, 0, &txn);
+	mdb_dbi_open(txn, NULL, 0, &dbi);
+	mdb_put(txn, dbi, &key, &value, 0);
+	mdb_dbi_close(env, dbi);
+	mdb_txn_commit(txn);
+	printf("%d %d\n", ((int*)(key.mv_data))[0], ((int*)(key.mv_data))[1]);
+
+}
+
+void chunks_get_at(int x, int z) {
+	MDB_txn* txn;
+	MDB_dbi dbi;
+	int pos[2] = { x, z };
+	MDB_val key = GENERATE_KEY(pos);
+	MDB_val value = {};
+
+	mdb_txn_begin(env, NULL, 0, &txn);
+	mdb_dbi_open(txn, NULL, 0, &dbi);
+	mdb_get(txn, dbi, &key, &value);
+	mdb_dbi_close(env, dbi);
+	mdb_txn_abort(txn);
 }

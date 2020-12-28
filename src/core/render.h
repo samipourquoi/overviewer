@@ -2,7 +2,7 @@
 #define OVERVIEWER_RENDER_H
 
 #include <cairo/cairo.h>
-#include "parse.h"
+#include "chunks.h"
 #include "models.h"
 
 #define TILE_HEIGHT 32

@@ -3,7 +3,7 @@
 
 #include <hashtable.h>
 #include <cairo/cairo.h>
-#include "parse.h"
+#include "chunks.h"
 #include "models.h"
 #include "render.h"
 

@@ -1,7 +1,8 @@
-#ifndef OVERVIEWER_PARSE_H
-#define OVERVIEWER_PARSE_H
+#ifndef OVERVIEWER_CHUNKS_H
+#define OVERVIEWER_CHUNKS_H
 
 #include <stdio.h>
+#include <lmdb.h>
 #include "nbt.h"
 #include "models.h"
 
@@ -57,5 +58,18 @@ compound_tag* parse_chunk(unsigned char* data, int length);
 int read_region_file(char* path, int chunkX, int chunkZ);
 
 unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length);
+
+///=================================///
+///           	DATABASE	        ///
+///=================================///
+
+extern MDB_env* env;
+
+void chunks_init_db();
+
+void chunks_set_at(int x, int z);
+
+void chunks_get_at(int x, int z);
+
 
 #endif

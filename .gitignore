@@ -1,6 +1,7 @@
 # Project Specific
 overviewer
 assets/
+chunks/
 
 # TypeScript
 
