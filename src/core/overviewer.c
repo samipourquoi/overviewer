@@ -19,12 +19,10 @@ void core_start() {
 	srand(0xDEADBEEF);
 	assets_init();
 	chunks_init_db();
-	chunks_set_at(20, 0);
-	chunks_get_at(20, 4);
+	chunks_set_at(0, 0, "sami", 5);
 }
 
 void core_end() {
-
 	ht_destroy(blockstates_list);
 	free(blockstates_list);
 }

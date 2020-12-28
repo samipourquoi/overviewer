@@ -67,9 +67,9 @@ extern MDB_env* env;
 
 void chunks_init_db();
 
-void chunks_set_at(int x, int z);
+void chunks_set_at(int x, int z, char* data, int data_length);
 
-void chunks_get_at(int x, int z);
+char* chunks_get_at(int x, int z);
 
 
 #endif

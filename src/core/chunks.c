@@ -248,16 +248,14 @@ void chunks_init_db() {
 		.mv_size = 2 * sizeof(int) \
 	}
 
-void chunks_set_at(int x, int z) {
-	char* test = "hello";
-
+void chunks_set_at(int x, int z, char* data, int data_length) {
 	MDB_txn* txn;
 	MDB_dbi dbi;
 	int pos[2] = { x, z };
 	MDB_val key = GENERATE_KEY(pos);
 	MDB_val value = {
-			.mv_data = test,
-			.mv_size = 6
+			.mv_data = data,
+			.mv_size = data_length
 	};
 
 	mdb_txn_begin(env, NULL, 0, &txn);
@@ -265,11 +263,9 @@ void chunks_set_at(int x, int z) {
 	mdb_put(txn, dbi, &key, &value, 0);
 	mdb_dbi_close(env, dbi);
 	mdb_txn_commit(txn);
-	printf("%d %d\n", ((int*)(key.mv_data))[0], ((int*)(key.mv_data))[1]);
-
 }
 
-void chunks_get_at(int x, int z) {
+char* chunks_get_at(int x, int z) {
 	MDB_txn* txn;
 	MDB_dbi dbi;
 	int pos[2] = { x, z };
@@ -281,4 +277,6 @@ void chunks_get_at(int x, int z) {
 	mdb_get(txn, dbi, &key, &value);
 	mdb_dbi_close(env, dbi);
 	mdb_txn_abort(txn);
+
+	return value.mv_data;
 }
