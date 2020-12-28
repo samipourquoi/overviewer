@@ -4,7 +4,7 @@
 	"description": "Real-time Minecraft world overviewer.",
 	"types": "src/types",
 	"scripts": {
-		"start:server": "make server && node build/server/index.js"
+		"start:server": "makegi && node build/server/index.js"
 	},
 	"repository": {
 		"type": "git",

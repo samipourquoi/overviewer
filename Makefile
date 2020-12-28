@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wfatal-errors -g $(HEADERS)
 HEADERS = -Ithirdparty/parson -Ithirdparty/hashtable
-LIB = -lz -lcairo -Lthirdparty/ -ldeps
+LIB = -lz -lcairo -Lthirdparty/ -ldeps -lm -llmdb
 CORE = build/core
 SERVER = build/server
 OS = $(shell uname -s | tr A-Z a-z)
@@ -22,11 +22,11 @@ builddir:
 server:
 	npx tsc
 
-core: assets.o models.o nbt.o overviewer.o parse.o render.o
+core: $(CORE)/assets.o $(CORE)/models.o $(CORE)/nbt.o $(CORE)/overviewer.o $(CORE)/parse.o $(CORE)/render.o
 	$(CC) $(CFLAGS) $(LIB) $(CORE)/*.o -shared -o $(CORE)/libcore.$(LIBEXT)
 
-%.o: src/core/%.c src/core/%.h
-	$(CC) -c $(CFLAGS) $< -o $(CORE)/$@
+$(CORE)/%.o: src/core/%.c src/core/%.h
+	$(CC) -c $(CFLAGS) $< -o $@
 
 install:
 	cd thirdparty && $(MAKE)
