@@ -1,3 +1,4 @@
 export interface CoreAPI {
-    assets_init: () => void;
+    core_start: () => void;
+    core_end: () => void;
 }

@@ -14,3 +14,13 @@ int main(void) {
 	free(blockstates_list);
 	return 0;
 }
+
+void core_start() {
+	srand(0xDEADBEEF);
+	assets_init();
+}
+
+void core_end() {
+	ht_destroy(blockstates_list);
+	free(blockstates_list);
+}

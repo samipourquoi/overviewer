@@ -5,7 +5,11 @@
 		"outDir": "build/server/",
 		"incremental": true,
 		"module": "CommonJS",
-		"moduleResolution": "Node"
+		"moduleResolution": "Node",
+		"baseUrl": ".",
+		"paths": {
+			"*": [ "*", "src/types/*" ]
+		}
 	},
 	"include": [
 		"src/server/**.ts"

@@ -2,6 +2,7 @@
 	"name": "overviewer",
 	"version": "1.0.0",
 	"description": "Real-time Minecraft world overviewer.",
+	"types": "src/types",
 	"scripts": {
 		"start:server": "make server && node build/server/index.js"
 	},

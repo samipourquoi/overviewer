@@ -4,6 +4,14 @@ HEADERS = -Ithirdparty/parson -Ithirdparty/hashtable
 LIB = -lz -lcairo -Lthirdparty/ -ldeps
 CORE = build/core
 SERVER = build/server
+OS = $(shell uname -s | tr A-Z a-z)
+LIBEXT = so
+
+ifeq ($(OS),darwin)
+	LIBEXT = dylib
+else ifeq ($(OS),mac)
+	LIBEXT = dylib
+endif
 
 all: builddir core server
 
@@ -15,8 +23,7 @@ server:
 	npx tsc
 
 core: assets.o models.o nbt.o overviewer.o parse.o render.o
-	# TODO: Make the shared library file extension not OS-dependent
-	$(CC) $(CFLAGS) $(LIB) $(CORE)/*.o -shared -o $(CORE)/libcore.dylib
+	$(CC) $(CFLAGS) $(LIB) $(CORE)/*.o -shared -o $(CORE)/libcore.$(LIBEXT)
 
 %.o: src/core/%.c src/core/%.h
 	$(CC) -c $(CFLAGS) $< -o $(CORE)/$@
