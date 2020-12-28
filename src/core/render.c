@@ -201,6 +201,25 @@ cairo_surface_t* render_side(char* name, direction_t direction, int tint) {
 	return iso;
 }
 
+typedef struct {
+	uint64_t total_length;
+	unsigned char* content;
+	int allocated_length;
+} write_steam_context_t;
+
+cairo_status_t render_write_to_db(void* closure, const unsigned char* data, unsigned int length) {
+	write_steam_context_t* context = (write_steam_context_t*)closure;
+
+	while (context->total_length + length > context->allocated_length) {
+		context->content = realloc(context->content, context->allocated_length *= 2);
+	}
+
+	memcpy(&context->content[context->total_length], data, length);
+	context->total_length += (int)length;
+
+	return CAIRO_STATUS_SUCCESS;
+}
+
 /**
  * Entrypoint of the rendering process.
  * Renders to an isometric view the given chunk content.
@@ -212,7 +231,6 @@ int render(chunk_t* chunk) {
 	cr = cairo_create(surface);
 	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 	const model_t* air_model_ptr = assets_get_model("air", NULL);
-	printf("%p\n", air_model_ptr);
 
 	for (pos_t pos = 0; pos < POS_MAX_VALUE; pos++) {
 		model_t* model = chunk->blocks[pos];
@@ -235,7 +253,21 @@ int render(chunk_t* chunk) {
 		draw_block(cr, model, POS_GET_X(pos), POS_GET_Y(pos), POS_GET_Z(pos), sides);
 	}
 
-	cairo_surface_write_to_png(surface, "render.png");
+	write_steam_context_t context = {
+			.allocated_length = 4096,
+			.content = malloc(4096),
+			// We allocate 4 bytes at the start to save
+			// the length of the buffer.
+			.total_length = sizeof(uint64_t)
+	};
+
+	cairo_surface_flush(surface);
+	cairo_surface_write_to_png_stream(surface, render_write_to_db, &context);
+	// context.total_length -= sizeof(uint64_t);
+	memcpy(context.content, &context.total_length, sizeof(uint64_t));
+	chunks_set_at(0, 0, context.content, context.total_length);
+	free(context.content);
 
 	return 0;
 }
+

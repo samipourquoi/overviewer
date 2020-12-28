@@ -248,7 +248,7 @@ void chunks_init_db() {
 		.mv_size = 2 * sizeof(int) \
 	}
 
-void chunks_set_at(int x, int z, char* data, int data_length) {
+void chunks_set_at(int x, int z, unsigned char* data, int data_length) {
 	MDB_txn* txn;
 	MDB_dbi dbi;
 	int pos[2] = { x, z };
@@ -265,7 +265,7 @@ void chunks_set_at(int x, int z, char* data, int data_length) {
 	mdb_txn_commit(txn);
 }
 
-char* chunks_get_at(int x, int z) {
+unsigned char* chunks_get_at(int x, int z) {
 	MDB_txn* txn;
 	MDB_dbi dbi;
 	int pos[2] = { x, z };

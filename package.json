@@ -21,13 +21,17 @@
 	},
 	"homepage": "https://github.com/samipourquoi/overviewer#readme",
 	"dependencies": {
+		"@types/dotenv": "^8.2.0",
 		"@types/ffi": "^0.2.3",
 		"@types/node": "^14.14.16",
+		"@types/ref-array": "0.0.28",
+		"dotenv": "^8.2.0",
 		"express": "^4.17.1",
 		"ffi": "github:lxe/node-ffi#node-12",
 		"nan": "^2.14.2",
 		"node-gyp": "^7.1.2",
 		"ref": "github:lxe/ref#node-12",
+		"ref-array": "github:lxe/ref-array#node-12",
 		"ref-struct": "github:lxe/ref-struct#node-12"
 	},
 	"devDependencies": {

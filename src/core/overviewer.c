@@ -19,7 +19,6 @@ void core_start() {
 	srand(0xDEADBEEF);
 	assets_init();
 	chunks_init_db();
-	chunks_set_at(0, 0, "sami", 5);
 }
 
 void core_end() {

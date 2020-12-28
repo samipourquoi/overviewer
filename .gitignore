@@ -2,8 +2,7 @@
 overviewer
 assets/
 chunks/
-
-# TypeScript
+.env
 
 # Build
 dist/
