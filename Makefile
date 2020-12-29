@@ -22,7 +22,7 @@ builddir:
 server:
 	npx tsc
 
-core: $(CORE)/assets.o $(CORE)/models.o $(CORE)/nbt.o $(CORE)/overviewer.o $(CORE)/chunks.o $(CORE)/render.o
+core: $(CORE)/assets.o $(CORE)/models.o $(CORE)/nbt.o $(CORE)/core.o $(CORE)/chunks.o $(CORE)/render.o
 	$(CC) $(CFLAGS) $(LIB) $(CORE)/*.o -shared -o $(CORE)/libcore.$(LIBEXT)
 
 $(CORE)/%.o: src/core/%.c src/core/%.h

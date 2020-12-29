@@ -53,9 +53,9 @@ void chunk_free(chunk_t* chunk);
 ///           CHUNK READING         ///
 ///=================================///
 
-compound_tag* parse_chunk(unsigned char* data, int length);
+compound_tag* parse_chunk(unsigned char* data, int length, int chunkX, int chunkZ);
 
-int read_region_file(char* path, int chunkX, int chunkZ);
+int chunk_read_and_render(char* path, int chunkX, int chunkZ);
 
 unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length);
 
@@ -63,13 +63,12 @@ unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length);
 ///           	DATABASE	        ///
 ///=================================///
 
-extern MDB_env* env;
+// extern MDB_env* env;
 
 void chunks_init_db();
 
 void chunks_set_at(int x, int z, unsigned char* data, int data_length);
 
 unsigned char* chunks_get_at(int x, int z);
-
 
 #endif

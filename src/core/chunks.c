@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <lmdb.h>
+#include <sys/stat.h>
 #include "chunks.h"
 #include "nbt.h"
 #include "render.h"
@@ -11,7 +12,6 @@
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define CHUNK_SIZE 4096
-#define DEBUG
 
 ///=================================///
 ///            CHUNK DATA           ///
@@ -41,7 +41,7 @@ void chunk_free(chunk_t* chunk) {
  * @param chunkX X coordinates of the chunk
  * @param chunkZ Z coordinates of the chunk
  */
-int read_region_file(char* path, int chunkX, int chunkZ) {
+int chunk_read_and_render(char* path, int chunkX, int chunkZ) {
 	FILE* region = fopen(path, "rb");
 
 	const int offset_location = 4 * ((chunkX & 31) + (chunkZ & 31) * 32);
@@ -60,13 +60,7 @@ int read_region_file(char* path, int chunkX, int chunkZ) {
 	int data_length = 16777216 * chunk_header[0] + 65536 * chunk_header[1] + 256 * chunk_header[2] + 1 * chunk_header[3] - 1;
 	unsigned char* uncompressed_data = read_chunk_data(region, data_length, &final_length);
 
-	parse_chunk(uncompressed_data, final_length);
-
-#ifdef DEBUG
-	FILE* foo = fopen("chunk.nbt", "wb+");
-	fwrite(uncompressed_data, 1, final_length, foo);
-	fclose(foo);
-#endif
+	parse_chunk(uncompressed_data, final_length, chunkX, chunkZ);
 
 	fclose(region);
 	return 0;
@@ -212,7 +206,7 @@ void parse_section(compound_tag* section, chunk_t* chunk, pos_t* coords) {
 	// }
 }
 
-compound_tag* parse_chunk(unsigned char* data, int length) {
+compound_tag* parse_chunk(unsigned char* data, int length, int chunkX, int chunkZ) {
 	// Better go read that! https://minecraft.gamepedia.com/Chunk_format
 	compound_tag* tree = nbt_parse_tree(data, length);
 	nbt_tag* sections = cmpd_get_from_path(tree, "Level.Sections");
@@ -227,7 +221,7 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 		parse_section(section->value->compound_value, chunk, &coords);
 	}
 
-	render(chunk);
+	render(chunk, chunkX, chunkZ);
 
 	chunk_free(chunk);
 	return NULL;
@@ -236,10 +230,11 @@ compound_tag* parse_chunk(unsigned char* data, int length) {
 
 MDB_env* env;
 void chunks_init_db() {
+	mkdir("chunks", 0700);
 	mdb_env_create(&env);
 	mdb_env_set_maxdbs(env, 1);
 	mdb_env_set_mapsize(env, 10485760);
-	mdb_env_open(env, "chunks", MDB_NOTLS, 0664);
+	mdb_env_open(env, "chunks", MDB_NOTLS, 0700);
 }
 
 #define GENERATE_KEY(POS) \
@@ -249,7 +244,7 @@ void chunks_init_db() {
 	}
 
 void chunks_set_at(int x, int z, unsigned char* data, int data_length) {
-	MDB_txn* txn;
+	MDB_txn* txn = NULL;
 	MDB_dbi dbi;
 	int pos[2] = { x, z };
 	MDB_val key = GENERATE_KEY(pos);

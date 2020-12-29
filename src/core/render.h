@@ -18,7 +18,7 @@ typedef enum {
 	RIGHT = 1 << 2
 } direction_t;
 
-int render(chunk_t* chunk);
+int render(chunk_t* chunk, int chunkX, int chunkZ);
 
 void map_to_screen(int x, int y, int z, int* screen_x, int* screen_y);
 

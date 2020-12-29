@@ -1,7 +1,8 @@
-import {Request, Response, Router} from "express";
+import { Router } from "express";
+import { ChunksProvider } from "../controllers/content";
 
 const router = Router();
 
-router.get("/", (req: Request, res: Response) => void 0);
+router.get("/", ChunksProvider.getChunk);
 
 export default router;

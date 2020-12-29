@@ -224,7 +224,7 @@ cairo_status_t render_write_to_db(void* closure, const unsigned char* data, unsi
  * Entrypoint of the rendering process.
  * Renders to an isometric view the given chunk content.
  */
-int render(chunk_t* chunk) {
+int render(chunk_t* chunk, int chunkX, int chunkZ) {
 	cairo_surface_t* surface;
 	cairo_t* cr;
 	surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, IMAGE_WIDTH, IMAGE_HEIGHT);
@@ -265,7 +265,7 @@ int render(chunk_t* chunk) {
 	cairo_surface_write_to_png_stream(surface, render_write_to_db, &context);
 	// context.total_length -= sizeof(uint64_t);
 	memcpy(context.content, &context.total_length, sizeof(uint64_t));
-	chunks_set_at(0, 0, context.content, context.total_length);
+	chunks_set_at(chunkX, chunkZ, context.content, context.total_length);
 	free(context.content);
 
 	return 0;
