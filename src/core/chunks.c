@@ -41,8 +41,11 @@ void chunk_free(chunk_t* chunk) {
  * @param chunkX X coordinates of the chunk
  * @param chunkZ Z coordinates of the chunk
  */
-int chunk_read_and_render(char* path, int chunkX, int chunkZ) {
+process_status_t chunk_read_and_render(char* path, int chunkX, int chunkZ) {
 	FILE* region = fopen(path, "rb");
+	if (region == NULL) {
+		return CHUNK_NO_EXIST;
+	}
 
 	const int offset_location = 4 * ((chunkX & 31) + (chunkZ & 31) * 32);
 	const int offset_timestamp = offset_location + 4096;
@@ -52,6 +55,7 @@ int chunk_read_and_render(char* path, int chunkX, int chunkZ) {
 	fread(location_header, sizeof(location_header), 1, region);
 
 	int offset_chunk = (65536 * location_header[0] + 256 * location_header[1] + 1 * location_header[2]) * 4096;
+	if (offset_chunk == 0) return CHUNK_NO_EXIST;
 	unsigned char chunk_header[5];
 	fseek(region, offset_chunk, SEEK_SET);
 	fread(chunk_header, sizeof(chunk_header), 1, region);

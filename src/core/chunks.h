@@ -53,9 +53,13 @@ void chunk_free(chunk_t* chunk);
 ///           CHUNK READING         ///
 ///=================================///
 
+typedef enum {
+	CHUNK_NO_EXIST
+} process_status_t;
+
 compound_tag* parse_chunk(unsigned char* data, int length, int chunkX, int chunkZ);
 
-int chunk_read_and_render(char* path, int chunkX, int chunkZ);
+process_status_t chunk_read_and_render(char* path, int chunkX, int chunkZ);
 
 unsigned char* read_chunk_data(FILE* region, int c_length, int* unc_length);
 
