@@ -4,4 +4,18 @@ version = "0.1.0"
 authors = ["samipourquoi"]
 edition = "2018"
 
+[workspace]
+members = [
+    "salmon",
+    "pilchard",
+    "halibut"
+]
+
+[[bin]]
+bench = false
+test = false
+path = "herring/main.rs"
+name = "overviewer"
+
 [dependencies]
+salmon = { path = "./salmon" }

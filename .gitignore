@@ -9,6 +9,7 @@ dist/
 build/
 **.tsbuildinfo
 /target
+*/Cargo.lock
 
 # Libs
 node_modules/

@@ -1,0 +1,7 @@
+[package]
+name = "pilchard"
+version = "0.1.0"
+authors = ["samipourquoi <sami.guiderdoni@gmail.com>"]
+edition = "2018"
+
+[dependencies]
