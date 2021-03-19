@@ -1,0 +1,7 @@
+[package]
+name = "overviewer"
+version = "0.1.0"
+authors = ["samipourquoi"]
+edition = "2018"
+
+[dependencies]

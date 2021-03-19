@@ -8,6 +8,7 @@ chunks/
 dist/
 build/
 **.tsbuildinfo
+/target
 
 # Libs
 node_modules/
