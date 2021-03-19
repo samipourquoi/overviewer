@@ -3,6 +3,7 @@ overviewer
 assets/
 chunks/
 .env
+old/
 
 # Build
 dist/
