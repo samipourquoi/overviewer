@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 miniz_oxide = "0.4.4"
-
+hematite-nbt = "0.5.1"
