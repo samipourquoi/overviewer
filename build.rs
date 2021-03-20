@@ -6,7 +6,6 @@ fn main() {
     if !Path::new("./assets")
         .is_dir()
     {
-        println!("Downloading assets...");
         Command::new("git")
             .args(&["clone", "-b", "assets", "--single-branch",
                 "https://github.com/samipourquoi/overviewer.git", "assets"])
