@@ -11,6 +11,6 @@ pub trait Format {
 pub fn get_interface(version: u32) -> impl Format {
     match version {
         1_16 => V116 {},
-        _ => panic!("version {} is not supported.")
+        _ => panic!("version {} is not supported.", version)
     }
 }
