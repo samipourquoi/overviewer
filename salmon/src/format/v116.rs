@@ -1,6 +1,6 @@
-use nbt::Value;
 use std::collections::HashMap;
-use std::cmp::max;
+
+use nbt::Value;
 
 pub struct V116;
 
@@ -18,7 +18,7 @@ impl super::Format for V116 {
         }?;
 
         let empty_hash: HashMap<String, Value> = HashMap::new();
-        let mut blocks = vec![empty_hash; 16*256*16];
+        let mut blocks = vec![empty_hash; 16 * 256 * 16];
 
         for section in sections {
             if let Value::Compound(section) = section {

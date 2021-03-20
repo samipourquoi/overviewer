@@ -1,13 +1,13 @@
-mod format;
-
-use std::io::{Read, Seek};
-use std::io::SeekFrom::{Start, Current};
-use std::fs::File;
-use miniz_oxide::inflate;
 use std::error::Error;
+use std::fs::File;
+use std::io::{Read, Seek};
+use std::io::SeekFrom::Start;
+
+use miniz_oxide::inflate;
+
 use crate::format::Format;
-use crate::format::V116;
-use nbt::Value::Compound;
+
+mod format;
 
 const REGION_BASE_PATH: &str = "/Users/sami/Library/Application Support/minecraft/saves/Overviewer/region";
 
@@ -20,8 +20,8 @@ impl Chunk {
         let region_file = std::fs::File::open(region_file_path).ok()?;
         let raw_data = Chunk::read_data_from(region_file, x, z).ok()?;
 
-        let mut data = inflate::decompress_to_vec_zlib(&raw_data).ok()?;
-        let nbt = format::get_interface(1_16)
+        let data = inflate::decompress_to_vec_zlib(&raw_data).ok()?;
+        let _nbt = format::get_interface(1_16)
             .parse(&data)?;
 
         Some(Chunk {})
