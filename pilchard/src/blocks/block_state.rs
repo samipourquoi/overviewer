@@ -3,13 +3,21 @@ use std::fs;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
+pub fn init() {
+    let _block_states: Vec<_> = fs::read_dir(Path::new("./assets/blockstates"))
+        .unwrap()
+        .map( |a| a.unwrap().path() )
+        .map( |path| BlockState::parse(&path) )
+        .collect();
+}
+
 pub struct BlockState {
     variants: Vec<Variant>
 }
 
 type States = HashSet<(String, String)>;
 
-struct Variant {
+pub struct Variant {
     model: String,
     x: i32,
     y: i32,
@@ -20,7 +28,7 @@ struct Variant {
 impl BlockState {
     pub fn find(&self, states: States) -> Option<&Variant> {
         self.variants.iter()
-            .find( |variant| variant.matches(states) )
+            .find( |variant| variant.matches(states.clone()) )
     }
 
     pub fn parse(path: &Path) -> Self {
@@ -30,7 +38,7 @@ impl BlockState {
         let variants = if !json["variants"].is_null() {
             parse_variants(&json)
         } else if !json["multipart"].is_null() {
-
+            vec![]
         } else {
             panic!("malformed block state file: {:?}", path)
         };
@@ -48,16 +56,9 @@ impl Variant {
 }
 
 fn parse_variants(json: &Value) -> Vec<Variant> {
-    // The 'variants' property can either be a single object, or an
-    // array of object. This match is to transform it to single value
-    // even if it is an array (it keeps the first element in that case).
-    match &json["variants"] {
-        Value::Object(obj)
-        => obj,
-        Value::Array(arr)
-        => arr[0].as_object().unwrap(),
-        _   => panic!()
-    }
+    json["variants"]
+        .as_object()
+        .unwrap()
         .iter()
         .map( |(states, model)| {
             let states: States = states.split(',')
@@ -70,8 +71,16 @@ fn parse_variants(json: &Value) -> Vec<Variant> {
                 } )
                 .collect();
 
-            let variant = model.as_object()
-                .unwrap();
+            // Each property can either be a single object, or an
+            // array of object. This match is to transform it to single value
+            // even if it is an array (it keeps the first element in that case).
+            let variant = match model {
+                Value::Object(obj)
+                    => obj,
+                Value::Array(arr)
+                    => arr[0].as_object().unwrap(),
+                _   => panic!()
+            };
 
             Variant {
                 model: variant.get("model").unwrap()
