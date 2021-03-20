@@ -18,4 +18,6 @@ path = "herring/main.rs"
 name = "overviewer"
 
 [dependencies]
-salmon = { path = "./salmon" }
+salmon   = { path = "./salmon"   }
+pilchard = { path = "./pilchard" }
+halibut  = { path = "./halibut"  }

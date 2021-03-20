@@ -1,7 +1,10 @@
 [package]
 name = "pilchard"
 version = "0.1.0"
-authors = ["samipourquoi <sami.guiderdoni@gmail.com>"]
+authors = ["samipourquoi"]
 edition = "2018"
 
 [dependencies]
+# lmdb = "0.8.0"
+hematite-nbt = "0.5.1"
+lazy_static = "1.4.0"
