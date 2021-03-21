@@ -26,8 +26,6 @@ impl super::Format for V116 {
             }
         }
 
-        println!("{:?}", blocks);
-
         Some(())
     }
 }

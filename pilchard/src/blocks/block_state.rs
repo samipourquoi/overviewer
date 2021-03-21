@@ -1,13 +1,14 @@
-use std::path::Path;
+use std::collections::HashSet;
 use std::fs;
+use std::path::Path;
+
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
 
 pub fn init() {
     let _block_states: Vec<_> = fs::read_dir(Path::new("./assets/blockstates"))
         .unwrap()
-        .map( |a| a.unwrap().path() )
-        .map( |path| BlockState::parse(&path) )
+        .map(|a| a.unwrap().path())
+        .map(|path| BlockState::parse(&path))
         .collect();
 }
 
@@ -22,13 +23,13 @@ pub struct Variant {
     x: i32,
     y: i32,
     uv_lock: bool,
-    states: States
+    states: States,
 }
 
 impl BlockState {
     pub fn find(&self, states: States) -> Option<&Variant> {
         self.variants.iter()
-            .find( |variant| variant.matches(states.clone()) )
+            .find(|variant| variant.matches(states.clone()))
     }
 
     pub fn parse(path: &Path) -> Self {
@@ -60,15 +61,15 @@ fn parse_variants(json: &Value) -> Vec<Variant> {
         .as_object()
         .unwrap()
         .iter()
-        .map( |(states, model)| {
+        .map(|(states, model)| {
             let states: States = states.split(',')
-                .map( |state| {
+                .map(|state| {
                     let (k, v) = match state.find('=') {
                         Some(i) => state.split_at(i),
                         None => ("", "")
                     };
                     (k.to_string(), v.to_string())
-                } )
+                })
                 .collect();
 
             // Each property can either be a single object, or an
@@ -76,10 +77,10 @@ fn parse_variants(json: &Value) -> Vec<Variant> {
             // even if it is an array (it keeps the first element in that case).
             let variant = match model {
                 Value::Object(obj)
-                    => obj,
+                => obj,
                 Value::Array(arr)
-                    => arr[0].as_object().unwrap(),
-                _   => panic!()
+                => arr[0].as_object().unwrap(),
+                _ => panic!()
             };
 
             Variant {
@@ -95,8 +96,8 @@ fn parse_variants(json: &Value) -> Vec<Variant> {
                 uv_lock: variant.get("uvlock")
                     .unwrap_or(&Value::from(false))
                     .as_bool().unwrap(),
-                states
+                states,
             }
-        } )
+        })
         .collect()
 }

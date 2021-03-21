@@ -1,4 +1,4 @@
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
 pub fn identifier_to_path(id: &str) -> PathBuf {
     let uri = if id.starts_with("minecraft:") {

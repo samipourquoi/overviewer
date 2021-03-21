@@ -1,36 +1,55 @@
 use std::collections::HashMap;
-use serde_json::Value;
-use lazy_static::lazy_static;
-use std::sync::Mutex;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
+
+use lazy_static::lazy_static;
 use serde::Deserialize;
-use std::borrow::Borrow;
-use std::ops::Deref;
+use serde_json::Value;
+
+use crate::render::blocks::RenderBlock;
 
 lazy_static! {
-    static ref CACHE: Mutex<HashMap<&'static str, &'static str>> = {
-        let mut m = HashMap::new();
-        Mutex::new(m)
-    };
+    // static ref CACHE: Mutex<HashMap<String, force_send_sync::Sync<Option<RenderBlock>>>> = {
+    //     let mut h = HashMap::new();
+    //     h.insert("hello".to_string(), None);
+        // Mutex::new(h)
+    // };
 }
 
-pub fn init() {
-    // let models: Vec<_> = std::fs::read_dir("./assets/models/block")
-    //     .expect("assets not found")
-    //     .map( |file| file.unwrap().path() )
-    //     .map(Model::parse)
-    //     .map(Model::render)
-    //     .collect();
-    let model = Model::parse(PathBuf::from("./assets/models/block/crafting_table.json"));
-    model.render();
+pub fn init() -> Vec<(String, Option<RenderBlock>)> {
+    let models: Vec<_> = std::fs::read_dir("./assets/models/block")
+        .expect("assets not found")
+        .map(|file| {
+            let file = file.unwrap();
+            let name = file.path()
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
+            let render = Model::parse(file.path())
+                .render();
+
+            (name, render)
+        })
+        .collect();
+
+    models
+
+    // let model = Model::parse(PathBuf::from("./assets/models/block/stone.json"));
+    // let render = model.render();
+    // let render = render.as_ref().unwrap();
+    // let render = cache.get(&"crafting_table".to_string()).unwrap();
+    // let render = render.get().as_ref().unwrap();
+    // let surface = render.no_tint();
+    // surface.write_to_png(&mut std::fs::File::create("stone.png").unwrap());
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Model {
     parent: Option<String>,
     pub textures: Option<HashMap<String, String>>,
-    pub elements: Option<Vec<Element>>
+    pub elements: Option<Vec<Element>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -38,25 +57,25 @@ pub struct Element {
     from: [f32; 3],
     to: [f32; 3],
     rotation: Option<Rotation>,
-    pub faces: Faces
+    pub faces: Faces,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Rotation {
     origin: [f32; 3],
     axis: String,
-    angle:  f32,
-    rescale: Option<bool>
+    angle: f32,
+    rescale: Option<bool>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Faces {
-    pub up:    Option<Face>,
-    pub down:  Option<Face>,
+    pub up: Option<Face>,
+    pub down: Option<Face>,
     pub north: Option<Face>,
     pub south: Option<Face>,
-    pub east:  Option<Face>,
-    pub west:  Option<Face>
+    pub east: Option<Face>,
+    pub west: Option<Face>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -65,21 +84,24 @@ pub struct Face {
     pub texture: String,
     pub cullface: Option<Direction>,
     pub rotation: Option<i32>,
-    pub tintindex: Option<i32>
+    pub tintindex: Option<i32>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Direction {
-    Up,     Down,
-    North,  South,
-    East,   West,
+    Up,
+    Down,
+    North,
+    South,
+    East,
+    West,
 
     // 'bottom' can be seen once in the source (scaffolding_unstable.json),
     // and as I honestly don't want to dive into serde's documentation to see
     // how to make an alias for an enum, I later replace every occurrence of
     // Bottom by Down.
-    Bottom
+    Bottom,
 }
 
 impl Default for Direction {
@@ -109,11 +131,14 @@ impl Model {
     }
 
     pub fn get_texture_path(&self, key: String) -> Option<PathBuf> {
+        let textures = self.textures.as_ref()?;
         let key = if key.starts_with('#') {
             key[1..].to_string()
         } else { key };
-        let textures = self.textures.as_ref()?;
         let id = textures.get(&key)?;
+        if id.starts_with('#') {
+            return None;
+        }
 
         Some(super::textures::identifier_to_path(id))
     }
@@ -145,7 +170,7 @@ impl Model {
         }
 
         let textures: HashMap<_, _> = textures.iter()
-            .map( |(k,v)| (k.clone(), dereference_pointer(v, &textures)))
+            .map(|(k, v)| (k.clone(), dereference_pointer(v, &textures)))
             .collect();
         self.textures = Some(textures);
     }
@@ -161,7 +186,7 @@ impl Model {
         if self.textures.is_none() {
             self.textures = parent.textures;
         } else {
-            let mut a = parent.textures
+            let a = parent.textures
                 .unwrap_or(HashMap::new());
             let mut b = self.textures
                 .as_ref()

@@ -96,6 +96,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "force-send-sync"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d9188d4e883c054455b2c7950be30c54b11d7400f0a8562b74a4acd79c495b6"
+
+[[package]]
 name = "futures-channel"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -293,6 +299,7 @@ name = "pilchard"
 version = "0.1.0"
 dependencies = [
  "cairo-rs",
+ "force-send-sync",
  "hematite-nbt",
  "lazy_static",
  "serde",
