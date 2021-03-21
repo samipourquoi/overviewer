@@ -16,12 +16,14 @@ lazy_static! {
 }
 
 pub fn init() {
-    let models: Vec<_> = std::fs::read_dir("./assets/models/block")
-        .expect("assets not found")
-        .map( |file| file.unwrap().path() )
-        .map(Model::parse)
-        .collect();
-    // let model = Model::parse(PathBuf::from("./assets/models/block/bricks.json"));
+    // let models: Vec<_> = std::fs::read_dir("./assets/models/block")
+    //     .expect("assets not found")
+    //     .map( |file| file.unwrap().path() )
+    //     .map(Model::parse)
+    //     .map(Model::render)
+    //     .collect();
+    let model = Model::parse(PathBuf::from("./assets/models/block/crafting_table.json"));
+    model.render();
 }
 
 #[derive(Deserialize, Debug)]
@@ -92,7 +94,6 @@ impl Model {
     }
 
     pub fn parse(path: PathBuf) -> Model {
-
         let contents = fs::read_to_string(&path)
             .unwrap();
         let mut model: Model = serde_json::from_str(contents.as_str())
@@ -105,6 +106,16 @@ impl Model {
         model.unfold_textures();
 
         model
+    }
+
+    pub fn get_texture_path(&self, key: String) -> Option<PathBuf> {
+        let key = if key.starts_with('#') {
+            key[1..].to_string()
+        } else { key };
+        let textures = self.textures.as_ref()?;
+        let id = textures.get(&key)?;
+
+        Some(super::textures::identifier_to_path(id))
     }
 
     // Each field in 'textures' can either be an identifier to a texture,
