@@ -1,3 +1,27 @@
+/// The whole rendering process goes like this:
+///
+/// > 1. For each pixel in the textures used in each face, keep a point in memory
+/// > with a pointer to the face/surface they're on.
+/// >
+/// > 2. Compute each point coordinate to an isometric projection.
+/// >
+/// > 3. Determine which points are culled and remove those which are not.
+/// >
+/// > 4. Do the inverse of step 2 to bring back points to their original position.
+/// >
+/// > 5. Get all the points that belong to each surface.
+/// >
+/// > 6. Create a 16x16 mask (the same size as the textures) from the points
+/// > positions for each surface, and apply that mask to the corresponding face's texture.
+/// >
+/// > 7. Project each face's texture to an isometric projection, and put them all
+/// > together to form one render. However, separate the faces that are tinted to the
+/// > ones that are not. The former will get re-rendered each time (when needed) while
+/// > the latter will not.
+///
+/// Step #2 and #4 can be eliminated if we change the angle from which we check if
+/// a point is culled or not in step #3.
+
 use std::fmt::Debug;
 use std::fs::File;
 

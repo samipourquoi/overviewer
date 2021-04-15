@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fs::File;
 
 use lazy_static::lazy_static;
-
 use crate::render::blocks::RenderBlock;
+
 
 // cairo-rs uses internally std::ptr::NonNull, which for some reason,
 // implements !Sync. This means it can't be shared across threads for

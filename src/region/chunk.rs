@@ -2,10 +2,11 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Seek};
 use std::io::SeekFrom::Start;
+use crate::region::format::Format;
 
 use miniz_oxide::inflate;
 
-use crate::format::Format;
+use super::format::V116;
 
 const REGION_BASE_PATH: &str = "/Users/sami/Library/Application Support/minecraft/saves/Overviewer/region";
 
@@ -22,7 +23,7 @@ impl Chunk {
         let raw_data = Chunk::read_data_from(region_file, x, z).ok()?;
 
         let data = inflate::decompress_to_vec_zlib(&raw_data).ok()?;
-        let _nbt = crate::format::get_interface(1_16)
+        let _nbt = super::format::get_interface(1_16)
             .parse(&data)?;
 
         Some(Chunk { x, z })

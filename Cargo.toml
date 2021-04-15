@@ -4,20 +4,12 @@ version = "0.1.0"
 authors = ["samipourquoi"]
 edition = "2018"
 
-[workspace]
-members = [
-    "salmon",
-    "pilchard",
-    "halibut"
-]
-
-[[bin]]
-bench = false
-test = false
-path = "herring/main.rs"
-name = "overviewer"
-
 [dependencies]
-salmon   = { path = "./salmon"   }
-pilchard = { path = "./pilchard" }
-halibut  = { path = "./halibut"  }
+miniz_oxide = "0.4.4"
+hematite-nbt = "0.5.1"
+lazy_static = "1.4.0"
+serde = "1.0.124"
+serde_json = "1.0.64"
+cairo-rs = { version = "0.9.1", features = ["png"] }
+force-send-sync = "1.0.0"
+# lmdb = "0.8.0"
