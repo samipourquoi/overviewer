@@ -1,6 +1,6 @@
 # Project Specific
 overviewer
-assets
+assets/
 chunks/
 .env
 old/

@@ -39,7 +39,7 @@ pub struct RenderBlock {
 
 #[derive(Debug, Clone)]
 struct VirtualPoint<'a> {
-    coordinates: (f64, f64, f64),
+    coordinates: (i32, i32, i32),
     pixel: (i32, i32),
     face: &'a Face
 }
@@ -120,16 +120,17 @@ impl Model {
             .collect();
         let virtualized: Vec<VirtualPoint> = virtualized.clone()
             .concat();
+        let culling = occlusion_culling(&virtualized);
 
         None
     }
 }
 
 impl Element {
-    // Returns a tuple with the first element being the isometric
-    // render of the face, and the second one being the texture
-    // to tint and overlay on top of the previous one, if the
-    // face needs to be tinted.
+    /// Returns a tuple with the first element being the isometric
+    /// render of the face, and the second one being the texture
+    /// to tint and overlay on top of the previous one, if the
+    /// face needs to be tinted.
     pub fn render(&self, model: &Model)
                   -> (cairo::ImageSurface, Option<cairo::ImageSurface>)
     {
@@ -173,14 +174,14 @@ impl Element {
 
     /// Virtualizes each visible pixel of the element (step #1).
     /// In the isometric projection, (0,0,0) corresponds to the
-    /// bottommost vertex at the front, while (15,15,15) corresponds
-    /// to the uppermost vertex at the back.
-    /// Just as in the game, +x is towards east and +z is towards south.
+    /// uppermost vertex at the front, while (15,15,15) corresponds
+    /// to the bottommost vertex at the back.
+    /// +x is towards west, +y is downwards, and +z is towards north.
     ///
     /// For now, that method assumes that every block is composed of 1x1px surfaces
-    /// or any whole number. Luckily, I don't there is any block in the current version of the game
-    /// (as I'm writing this, 1.16.4) that doesn't fit this requirement.
-    pub fn virtualize(&self) -> Vec<VirtualPoint> {
+    /// or any whole number. Luckily, I don't think there is any block in the current
+    /// version of the game (as I'm writing this, 1.16.4) that doesn't fit this requirement.
+    fn virtualize(&self) -> Vec<VirtualPoint> {
         let mut points = vec![];
         if let Some(face) = &self.faces.up {
             let direction = Direction::Up;
@@ -191,21 +192,23 @@ impl Element {
             let amount_x = (uv[0] - uv[2]).abs() as i32;
             let amount_y = (uv[1] - uv[3]).abs() as i32;
 
+            // In the game, +x -> east, +y -> up, and +z -> south.
+            // In our coordinate system, it is the opposite.
             let [dx,dy,dz] = self.from;
+            let (dx,dy,dz) = (15.0-dx,15.0-dy,15.0-dz);
 
             // x and y are the coordinates of each pixel of the visible part of the texture.
             for x in 0..(amount_x - 1) {
                 for y in 0..(amount_y - 1) {
                     let coordinates = match direction {
-                        Direction::East  => (15.0            , (x as f32) + dy , (y as f32) + dz ),
-                        Direction::South => ((x as f32) + dx , (y as f32) + dy , 15.0            ),
-                        Direction::Up    => ((x as f32) + dx , 15.0            , (y as f32) + dz ),
-                        _                => unreachable!()
+                        Direction::East  => (0, y, x),
+                        Direction::South => (15-x, y, 0),
+                        Direction::Up    => (x, 0, y),
+                        _   => unreachable!()
                     };
 
                     let point = VirtualPoint {
-                        // we can't cast tuples...
-                        coordinates: (coordinates.0 as f64, coordinates.1 as f64, coordinates.2 as f64),
+                        coordinates,
                         pixel: (x, y),
                         face
                     };
@@ -278,4 +281,38 @@ fn deform(surface: &cairo::Surface, direction: Direction)
     iso_context.paint();
 
     iso_surface
+}
+
+fn is_occluded(point: &VirtualPoint, points: &Vec<VirtualPoint>) -> bool {
+    let points_hiding: Vec<_> = points.iter()
+        .filter(|p| {
+            // Our sight, in the isometric context, could be represented
+            // as a set of rays parallel to the vector <1,1,1>.
+            // e.g. a ray from (0,0,0) to (15,15,15).
+
+            // The point we're checking for occlusion.
+            let (x1, y1, z1) = point.coordinates;
+            // The point we're testing if it's hiding the previous point.
+            let (x2, y2, z2) = p.coordinates;
+
+            // Two vectors are collinear iff their cross product is the null vector.
+            let cross_product: (f64, f64, f64) = (
+                (y1 * z2 - z1 * y2) as f64,
+                (z1 * x2 - x1 * z2) as f64,
+                (x1 * y2 - y1 * x2) as f64
+            );
+            let is_collinear = cross_product == (0.0, 0.0, 0.0);
+            if !is_collinear { return false; }
+            // If a point hides another, it will be closer to (0,0,0)
+            x1 > x2 && y1 > y2 && z1 > z2
+        })
+        .collect();
+
+    points_hiding.len() > 0
+}
+
+fn occlusion_culling<'a>(points: &'a Vec<VirtualPoint>) -> Vec<&'a VirtualPoint<'a>> {
+    points.iter()
+        .filter(|point| !is_occluded(point, &points))
+        .collect()
 }

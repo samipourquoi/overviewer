@@ -6,8 +6,6 @@ use crate::region::format::Format;
 
 use miniz_oxide::inflate;
 
-use super::format::V116;
-
 const REGION_BASE_PATH: &str = "/Users/sami/Library/Application Support/minecraft/saves/Overviewer/region";
 
 pub struct Chunk {
