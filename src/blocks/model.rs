@@ -27,8 +27,9 @@ pub fn init() -> Vec<(String, Option<RenderBlock>)> {
                 .to_str()
                 .unwrap()
                 .to_string();
-            let render = Model::parse(file.path())
-                .render();
+            let model = Model::parse(file.path());
+            let render = model.render();
+            model.render2();
 
             (name, render)
         })
@@ -54,9 +55,9 @@ pub struct Model {
 
 #[derive(Deserialize, Debug)]
 pub struct Element {
-    from: [f32; 3],
-    to: [f32; 3],
-    rotation: Option<Rotation>,
+    pub from: [f32; 3],
+    pub to: [f32; 3],
+    pub rotation: Option<Rotation>,
     pub faces: Faces,
 }
 

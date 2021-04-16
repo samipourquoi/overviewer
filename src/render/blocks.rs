@@ -37,6 +37,13 @@ pub struct RenderBlock {
     dyn_surface: cairo::ImageSurface,
 }
 
+#[derive(Debug, Clone)]
+struct VirtualPoint<'a> {
+    coordinates: (f64, f64, f64),
+    pixel: (i32, i32),
+    face: &'a Face
+}
+
 impl RenderBlock {
     pub fn no_tint(&self) -> &cairo::ImageSurface {
         &self.static_surface
@@ -104,6 +111,18 @@ impl Model {
             dyn_surface: final_dyn,
         })
     }
+
+    pub fn render2(&self) -> Option<RenderBlock> {
+        // First, we keep track of each pixel of each texture.
+        let virtualized: Vec<_> = self.elements.as_ref()?
+            .iter()
+            .map(Element::virtualize)
+            .collect();
+        let virtualized: Vec<VirtualPoint> = virtualized.clone()
+            .concat();
+
+        None
+    }
 }
 
 impl Element {
@@ -150,6 +169,52 @@ impl Element {
 
         (static_surface,
          if is_any_face_tinted { Some(dyn_surface) } else { None })
+    }
+
+    /// Virtualizes each visible pixel of the element (step #1).
+    /// In the isometric projection, (0,0,0) corresponds to the
+    /// bottommost vertex at the front, while (15,15,15) corresponds
+    /// to the uppermost vertex at the back.
+    /// Just as in the game, +x is towards east and +z is towards south.
+    ///
+    /// For now, that method assumes that every block is composed of 1x1px surfaces
+    /// or any whole number. Luckily, I don't there is any block in the current version of the game
+    /// (as I'm writing this, 1.16.4) that doesn't fit this requirement.
+    pub fn virtualize(&self) -> Vec<VirtualPoint> {
+        let mut points = vec![];
+        if let Some(face) = &self.faces.up {
+            let direction = Direction::Up;
+            let uv = face.uv.unwrap_or([0.0, 0.0, 16.0, 16.0]);
+
+            // Amount of pixels shown on the face on their
+            // respective axis.
+            let amount_x = (uv[0] - uv[2]).abs() as i32;
+            let amount_y = (uv[1] - uv[3]).abs() as i32;
+
+            let [dx,dy,dz] = self.from;
+
+            // x and y are the coordinates of each pixel of the visible part of the texture.
+            for x in 0..(amount_x - 1) {
+                for y in 0..(amount_y - 1) {
+                    let coordinates = match direction {
+                        Direction::East  => (15.0            , (x as f32) + dy , (y as f32) + dz ),
+                        Direction::South => ((x as f32) + dx , (y as f32) + dy , 15.0            ),
+                        Direction::Up    => ((x as f32) + dx , 15.0            , (y as f32) + dz ),
+                        _                => unreachable!()
+                    };
+
+                    let point = VirtualPoint {
+                        // we can't cast tuples...
+                        coordinates: (coordinates.0 as f64, coordinates.1 as f64, coordinates.2 as f64),
+                        pixel: (x, y),
+                        face
+                    };
+                    points.push(point);
+                }
+            }
+        }
+
+        points
     }
 }
 
